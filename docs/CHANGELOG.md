@@ -20,6 +20,8 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
   overwriting different exported media by using content-specific filenames.
 - Keep dictionary definitions in the configured dictionary order when an
   inflected lookup merges multiple deinflection candidates.
+- Keep Sasayaki jumps to cues in the previous chapter from counting the target
+  chapter in the current reading session when image holding is enabled.
 
 ## [v1.3.1] - 2026-07-11
 

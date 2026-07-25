@@ -144,6 +144,22 @@ class ReaderStatisticsTrackerTest {
         assertEquals(40, tracker.state.session.charactersRead)
     }
 
+    @Test
+    fun sasayakiBackwardRestoreReanchorsWithoutCountingTargetChapter() {
+        val clock = FakeStatisticsClock()
+        val tracker = ReaderStatisticsTracker(title = "Book", initialStatistics = emptyList(), enabled = true, clock = clock)
+
+        tracker.start(currentCharacter = 2_000)
+        clock.advance(seconds = 1)
+        tracker.update(currentCharacter = 2_000)
+        tracker.resetBaseline(currentCharacter = 900)
+        tracker.resetBaseline(currentCharacter = 920)
+        clock.advance(seconds = 1)
+        tracker.update(currentCharacter = 930)
+
+        assertEquals(10, tracker.state.session.charactersRead)
+    }
+
     private class FakeStatisticsClock(
         var millis: Long = 1_778_623_200_000,
         var date: LocalDate = LocalDate.parse("2026-05-13"),
