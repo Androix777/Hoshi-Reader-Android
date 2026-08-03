@@ -71,6 +71,7 @@ class ReaderSettingsRepositoryTest {
             assertFalse(settings.enableStatistics)
             assertTrue(settings.showStatisticsTab)
             assertEquals(StatisticsAutostartMode.Off, settings.statisticsAutostartMode)
+            assertEquals(0, settings.statisticsResetMinutes)
             assertFalse(settings.showStatisticsToggle)
             assertFalse(settings.showReadingSpeed)
             assertFalse(settings.showReadingTime)
@@ -297,6 +298,15 @@ class ReaderSettingsRepositoryTest {
             val saved = repository.settings.first()
 
             assertEquals(2.0, saved.popupScale, 0.000001)
+        }
+    }
+
+    @Test
+    fun statisticsResetMinutesPersistAsMinuteOfDay() = runBlocking {
+        repository().use { repository ->
+            repository.update { it.copy(statisticsResetMinutes = 105) }
+
+            assertEquals(105, repository.settings.first().statisticsResetMinutes)
         }
     }
 

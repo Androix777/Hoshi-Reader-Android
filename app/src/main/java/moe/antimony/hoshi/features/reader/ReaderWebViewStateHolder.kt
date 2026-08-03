@@ -25,6 +25,9 @@ internal class ReaderWebViewStateHolder(
     var showStatistics by mutableStateOf(false)
         private set
 
+    val hasStatisticsBlockingSheet: Boolean
+        get() = showAppearance || showGoTo || showSasayaki || showStatistics
+
     var showReaderMenu by mutableStateOf(false)
         private set
 

@@ -117,6 +117,13 @@ Manual reader validation should cover:
   revealing chrome before closing, bottom progress band, title/back-button
   settings, compact bottom buttons, and progress indicators hidden from the text
   area when configured.
+- statistics reset time at 00:00 and a non-midnight minute boundary, including
+  both sides of the boundary, app restart, a system time-zone change, and the
+  Statistics dashboard using the same adjusted Today date.
+- active statistics tracking while opening and dismissing Appearance, Contents,
+  Statistics, Sasayaki, and fullscreen images. Modal time and character jumps
+  must not be counted; overlapping surfaces and lifecycle stop/start must not
+  resume tracking until every visible surface is closed.
 - current-book cover publishing when enabled: opening two different books
   updates only the lock-screen wallpaper in sequence; fixed-file export keeps
   the same SAF document URI while replacing its PNG contents; missing covers,

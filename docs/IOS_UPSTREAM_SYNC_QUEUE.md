@@ -282,55 +282,7 @@ Validation:
 - Check chapter row selection/counts, chapter progress, time remaining, gallery
   order, fullscreen display, restore, and iOS-compatible book-info sidecars.
 
-### 6. Statistics reset time and modal pause semantics
-
-Status: pending Android sync.
-
-Commits:
-
-- `f403c99` - add a configurable statistics day reset time.
-- `b4e6edd` - allow minute-level selection with a time picker and migrate the
-  earlier hour value.
-- `54fab15` - pause statistics while any Reader sheet or fullscreen image is
-  open.
-
-Dependency/value reasoning:
-
-- Day-key calculation and pause/resume baselines affect persisted statistics;
-  they should be implemented and tested as one state-flow slice.
-
-iOS behavior to mirror:
-
-- Users choose the local hour and minute at which a new statistics day begins.
-  Existing hour-only values migrate to minutes.
-- Opening Appearance, Contents, Statistics, Sasayaki, or fullscreen images stops
-  elapsed-time accumulation. Dismissal resets the character/time baseline before
-  tracking resumes.
-
-Android current gap:
-
-- `ReaderSettings` and `ReaderStatisticsSettingsView.kt` have no reset-time
-  value. `SystemReaderStatisticsClock.currentDate()` in
-  `ReaderStatisticsTracker.kt` always uses the civil `LocalDate.now()` boundary.
-- `ReaderWebView.kt` pauses the tracker for lifecycle stop, but its
-  `showAppearance`, `showGoTo`, `showSasayaki`, `showStatistics`, and
-  `fullscreenImage` state transitions do not pause/reset tracking.
-
-Suggested slice:
-
-- Persist reset minutes, derive one adjusted local date provider used by Reader
-  and the Statistics dashboard, and migrate any future hour-only key safely.
-- Centralize modal visibility into tracker pause/resume events with baseline
-  reset and tests for overlapping/dismissed surfaces.
-
-Validation:
-
-- Cross midnight and the configured reset time while reading, including time
-  zone changes and app restart.
-- Open every Reader sheet and fullscreen image while tracking; confirm modal
-  time and navigation do not inflate reading time or character deltas.
-
-### 7. Sasayaki import, playback ranges, media controls, and MP3 mining clips
+### 6. Sasayaki import, playback ranges, media controls, and MP3 mining clips
 
 Status: pending Android sync.
 
@@ -383,7 +335,7 @@ Validation:
 - Mine clips through AnkiDroid and AnkiConnect and verify valid MP3 playback,
   MIME type, hashed filenames, and sentence range expansion.
 
-### 8. Shared Reader/lookup text-boundary corrections
+### 7. Shared Reader/lookup text-boundary corrections
 
 Status: pending Android sync.
 
@@ -426,7 +378,7 @@ Validation:
   supplementary characters, ellipses, periods, and adjacent popup expression
   tags; verify lookup sentence and Anki cloze offsets.
 
-### 9. Bookshelf cover privacy, fallback artwork, and decode pressure
+### 8. Bookshelf cover privacy, fallback artwork, and decode pressure
 
 Status: pending Android sync.
 
@@ -474,7 +426,7 @@ Validation:
   collapsed shelf previews, multi-select, Show/Blur/Hide, dark/e-ink themes.
 - Fast-scroll a large library and compare decode concurrency, memory, and jank.
 
-### 10. Lookup popup two-column layout and visual sizing
+### 9. Lookup popup two-column layout and visual sizing
 
 Status: pending Android sync.
 
@@ -519,7 +471,7 @@ Validation:
 - Run `node --test app/src/test/js/*.test.mjs`, focused settings tests,
   localization tests, and lint.
 
-### 11. Reader route open-failure fallback
+### 10. Reader route open-failure fallback
 
 Status: pending Android sync.
 
@@ -553,7 +505,7 @@ Validation:
 - Missing/corrupt book, working Close, normal Reader open/close, Android Back,
   bookshelf state preservation, and bookmark refresh.
 
-### 12. Google Drive timeout and automatic-refresh error suppression
+### 11. Google Drive timeout and automatic-refresh error suppression
 
 Status: pending Android sync.
 
@@ -591,7 +543,7 @@ Validation:
 - Automatic refresh offline, slow token/list requests, and connection loss;
   manual connect/refresh/import/export/delete must still show actionable errors.
 
-### 13. Reader WebView line-box CSS parity
+### 12. Reader WebView line-box CSS parity
 
 Status: pending Android sync.
 
@@ -641,8 +593,6 @@ Validation:
 | `ff86caa` | 2026-07-28 | Explicitly load selected reader font | Pending computed-font load await |
 | `fd124d4`, `51cb994` | 2026-07-14 / 2026-07-24 | Reader Gallery inside Contents | Pending image index and Gallery UI |
 | `bcbef64`, `2e1c958` | 2026-07-14 / 2026-07-16 | True same-file TOC ranges and chapter progress | Pending fragment offsets and progress consumers |
-| `f403c99`, `b4e6edd` | 2026-06-19 / 2026-07-24 | Configurable minute-level statistics reset time | Pending settings and adjusted date provider |
-| `54fab15` | 2026-07-17 | Pause statistics for Reader modals | Pending modal pause/baseline state flow |
 | `947898c` | 2026-07-01 | Export Sasayaki mining clips as MP3 | Pending Android MP3 encoder/export path |
 | `4a5cfde` | 2026-07-14 | Honor media-control skip mode | Pending MediaSession command routing |
 | `a9a0747`, `d7fe3f2` | 2026-07-28 | MP4/TXT imports and larger playback ranges | Pending SAF/storage/range updates |
@@ -662,16 +612,19 @@ Validation:
 4. Reader paginated paragraph splitting and explicit font readiness.
 5. Reader furigana reveal mode.
 6. Reader contents gallery, true TOC ranges, and chapter progress.
-7. Statistics reset time and modal pause semantics.
-8. Sasayaki import, playback ranges, media controls, and MP3 mining clips.
-9. Bookshelf cover privacy, fallback artwork, and decode pressure.
-10. Lookup popup two-column layout and visual sizing.
-11. Reader route open-failure fallback.
-12. Google Drive timeout and automatic-refresh error suppression.
-13. Reader WebView line-box CSS parity.
+7. Sasayaki import, playback ranges, media controls, and MP3 mining clips.
+8. Bookshelf cover privacy, fallback artwork, and decode pressure.
+9. Lookup popup two-column layout and visual sizing.
+10. Reader route open-failure fallback.
+11. Google Drive timeout and automatic-refresh error suppression.
+12. Reader WebView line-box CSS parity.
 
 ## Covered Or No Android Action
 
+- `f403c99`, `b4e6edd`, `54fab15`: Android now persists a minute-level
+  statistics reset time, uses the adjusted local date in Reader and the
+  Statistics dashboard, and pauses tracking across Reader sheets and fullscreen
+  images without losing the active tracking state.
 - `24e356f`: orphaned Xcode project fix from the previous force-updated tip; no
   Android behavior.
 - `e63cb91`, `f09664d`, `ff31274`, `262df07`, `a90a83f`, `ede061f`,

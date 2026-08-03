@@ -124,6 +124,7 @@ fun ReaderWebView(
     val audioSettingsRepository = appContainer.audioSettingsRepository
     val sasayakiSettingsRepository = appContainer.sasayakiSettingsRepository
     val sasayakiPlaybackServiceRuntime = appContainer.sasayakiPlaybackServiceRuntime
+    val statisticsDateProvider = appContainer.statisticsDateProvider
     val bookRepository = appContainer.bookRepository
     var sasayakiSettings by remember { mutableStateOf(SasayakiSettings()) }
     var sasayakiMatchData by remember(bookRoot) { mutableStateOf<SasayakiMatchData?>(null) }
@@ -318,12 +319,20 @@ fun ReaderWebView(
             emptyList()
         }
     }
-    val statisticsTracker = remember(bookRoot, book.title, effectiveSettings.enableStatistics, persistedStatistics) {
+    val statisticsTracker = remember(
+        bookRoot,
+        book.title,
+        effectiveSettings.enableStatistics,
+        effectiveSettings.statisticsResetMinutes,
+        persistedStatistics,
+    ) {
         persistedStatistics?.let { statistics ->
             ReaderStatisticsTracker(
                 title = book.title,
                 initialStatistics = statistics,
                 enabled = effectiveSettings.enableStatistics,
+                resetMinutes = effectiveSettings.statisticsResetMinutes,
+                dateProvider = statisticsDateProvider,
             )
         }
     }
@@ -453,6 +462,14 @@ fun ReaderWebView(
         if (!resumeStatisticsTrackingOnStart) return
         resumeStatisticsTrackingOnStart = false
         statisticsTracker?.start(currentDisplayedCharacter())
+        syncStatisticsState()
+    }
+    val hasStatisticsBlockingModal = stateHolder.hasStatisticsBlockingSheet || fullscreenImage != null
+    LaunchedEffect(statisticsTracker, hasStatisticsBlockingModal) {
+        statisticsTracker?.setModalPaused(
+            paused = hasStatisticsBlockingModal,
+            currentCharacter = currentDisplayedCharacter(),
+        )
         syncStatisticsState()
     }
     LaunchedEffect(statisticsTracker, effectiveSettings.statisticsAutostartMode) {

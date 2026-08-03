@@ -85,6 +85,7 @@ data class ReaderSettings(
     val enableStatistics: Boolean = false,
     val showStatisticsTab: Boolean = true,
     val statisticsAutostartMode: StatisticsAutostartMode = StatisticsAutostartMode.Off,
+    val statisticsResetMinutes: Int = 0,
     val statisticsSyncEnabled: Boolean = false,
     val statisticsSyncMode: StatisticsSyncMode = StatisticsSyncMode.Merge,
     val showStatisticsToggle: Boolean = false,
@@ -556,6 +557,7 @@ class ReaderSettingsRepository(
             enableStatistics = this[KEY_ENABLE_STATISTICS] ?: false,
             showStatisticsTab = this[KEY_SHOW_STATISTICS_TAB] ?: true,
             statisticsAutostartMode = StatisticsAutostartMode.fromRawValue(this[KEY_STATISTICS_AUTOSTART_MODE]),
+            statisticsResetMinutes = this[KEY_STATISTICS_RESET_MINUTES] ?: 0,
             statisticsSyncEnabled = this[KEY_STATISTICS_SYNC_ENABLED] ?: false,
             statisticsSyncMode = StatisticsSyncMode.fromRawValue(this[KEY_STATISTICS_SYNC_MODE]),
             showStatisticsToggle = this[KEY_SHOW_STATISTICS_TOGGLE] ?: false,
@@ -623,6 +625,7 @@ class ReaderSettingsRepository(
         this[KEY_ENABLE_STATISTICS] = settings.enableStatistics
         this[KEY_SHOW_STATISTICS_TAB] = settings.showStatisticsTab
         this[KEY_STATISTICS_AUTOSTART_MODE] = settings.statisticsAutostartMode.rawValue
+        this[KEY_STATISTICS_RESET_MINUTES] = settings.statisticsResetMinutes
         this[KEY_STATISTICS_SYNC_ENABLED] = settings.statisticsSyncEnabled
         this[KEY_STATISTICS_SYNC_MODE] = settings.statisticsSyncMode.rawValue
         this[KEY_SHOW_STATISTICS_TOGGLE] = settings.showStatisticsToggle
@@ -668,6 +671,7 @@ class ReaderSettingsRepository(
         this[KEY_ENABLE_STATISTICS] = settings.enableStatistics
         this[KEY_SHOW_STATISTICS_TAB] = settings.showStatisticsTab
         this[KEY_STATISTICS_AUTOSTART_MODE] = settings.statisticsAutostartMode.rawValue
+        this[KEY_STATISTICS_RESET_MINUTES] = settings.statisticsResetMinutes
         this[KEY_STATISTICS_SYNC_ENABLED] = settings.statisticsSyncEnabled
         this[KEY_STATISTICS_SYNC_MODE] = settings.statisticsSyncMode.rawValue
         this[KEY_VOLUME_KEYS_TURN_PAGES] = settings.volumeKeysTurnPages
@@ -737,6 +741,7 @@ class ReaderSettingsRepository(
         private val KEY_ENABLE_STATISTICS = booleanPreferencesKey("enableStatistics")
         private val KEY_SHOW_STATISTICS_TAB = booleanPreferencesKey("showStatisticsTab")
         private val KEY_STATISTICS_AUTOSTART_MODE = stringPreferencesKey("statisticsAutostartMode")
+        private val KEY_STATISTICS_RESET_MINUTES = intPreferencesKey("statisticsResetMinutes")
         private val KEY_STATISTICS_SYNC_ENABLED = booleanPreferencesKey("statisticsEnableSync")
         private val KEY_STATISTICS_SYNC_MODE = stringPreferencesKey("statisticsSyncMode")
         private val KEY_SHOW_STATISTICS_TOGGLE = booleanPreferencesKey("readerShowStatisticsToggle")

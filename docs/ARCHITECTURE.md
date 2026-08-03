@@ -50,7 +50,8 @@ refactor goals belong in `docs/ARCHITECTURE_REFACTORING.md`.
   are persisted through book sidecar repositories and models.
 - The Statistics dashboard aggregates local book `statistics.json` sidecars
   through a Hilt-backed repository and exposes dashboard state through a
-  Hilt-backed ViewModel.
+  Hilt-backed ViewModel. Reader tracking and the dashboard share an adjusted
+  local-date provider driven by the global minute-level statistics reset time.
 - Book metadata sidecars may include a forced profile id and parsed EPUB
   language. Reader opening resolves the effective profile from forced profile,
   then EPUB language primary profile, then the global active profile.

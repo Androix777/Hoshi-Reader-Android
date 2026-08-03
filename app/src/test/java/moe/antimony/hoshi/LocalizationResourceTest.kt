@@ -225,6 +225,15 @@ class LocalizationResourceTest {
     }
 
     @Test
+    fun statisticsResetTimeLabelIsLocalized() {
+        val defaultResources = readStringResources(File(resDir, "values/strings.xml"))
+        val zhResources = readStringResources(File(resDir, "values-zh-rCN/strings.xml"))
+
+        assertEquals("Reset Time", defaultResources.strings["reader_statistics_reset_time"]?.value)
+        assertEquals("重置时间", zhResources.strings["reader_statistics_reset_time"]?.value)
+    }
+
+    @Test
     fun defaultLocaleIsDeclaredForGeneratedLocaleConfig() {
         val properties = File(resDir, "resources.properties")
 

@@ -954,6 +954,22 @@ class ReaderWebViewStateHolderTest {
     }
 
     @Test
+    fun statisticsBlockingSheetStaysVisibleUntilEveryOpenSheetIsDismissed() {
+        val holder = stateHolder()
+
+        assertFalse(holder.hasStatisticsBlockingSheet)
+        holder.openAppearanceFromMenu()
+        holder.openGoToFromMenu()
+        assertTrue(holder.hasStatisticsBlockingSheet)
+
+        holder.dismissAppearance()
+        assertTrue(holder.hasStatisticsBlockingSheet)
+
+        holder.dismissGoTo()
+        assertFalse(holder.hasStatisticsBlockingSheet)
+    }
+
+    @Test
     fun readerMenuButtonTogglesMenuVisibility() {
         val holder = stateHolder()
 
