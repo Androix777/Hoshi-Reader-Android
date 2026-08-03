@@ -8,6 +8,8 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ### Added
 
+- Add a Reader image gallery, true table-of-contents chapter ranges, and optional
+  current-chapter progress in Reader chrome and statistics.
 - Add a configurable daily statistics reset time and pause reading statistics
   while Reader sheets or fullscreen images are open.
 - Add optional current-book cover publishing for the Android lock screen and a
@@ -15,6 +17,12 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
   integration with iReader’s built-in Book Cover screen saver on compatible
   domestic and Musnap overseas firmware using standard PNG output, with Fit,
   Fill, and Stretch scaling modes.
+
+### Changed
+
+- Rename the Reader Go to panel to Contents, order its tabs as Chapters,
+  Highlights, Gallery, and Search, and remove overscroll deformation from
+  scrolling surfaces throughout the app.
 
 ### Fixed
 

@@ -103,6 +103,13 @@ Manual reader validation should cover:
   characters, and both incomplete and completed reveal.
 - long text page turns, chapter-list jumps into mid-book chapters, and bookmark
   restore.
+- Contents with nested and percent-encoded TOC fragments that share one XHTML
+  file: verify distinct row positions/current selection, true chapter progress
+  and time remaining, jump/restore behavior, and Gallery first-appearance order.
+  Include duplicate, gaiji, SVG, missing, and absent images; Gallery items must
+  open the existing fullscreen copy/save/share viewer. Verify the tabs appear as
+  Chapters, Highlights, Gallery, Search and none of their scrolling content
+  stretches or glows past either edge.
 - forward and backward chapter boundaries, including reverse landing at the
   previous chapter end.
 - page progress monotonicity, per-page progress updates, and restore landing
@@ -116,7 +123,9 @@ Manual reader validation should cover:
 - reader chrome behavior: focus mode, transient system bars, Android Back
   revealing chrome before closing, bottom progress band, title/back-button
   settings, compact bottom buttons, and progress indicators hidden from the text
-  area when configured.
+  area when configured. With whole-book and chapter progress both enabled,
+  verify the top bubble stays on one line and the transient bottom bubble shows
+  two complete lines.
 - statistics reset time at 00:00 and a non-midnight minute boundary, including
   both sides of the boundary, app restart, a system time-zone change, and the
   Statistics dashboard using the same adjusted Today date.
@@ -229,6 +238,9 @@ emulator state without clearing data or reimporting.
 
 Validate relevant settings/theme changes with:
 
+- Compose scrolling surfaces across Bookshelf, Contents, Statistics, Settings,
+  and modal sheets do not stretch or glow past either edge; normal scrolling,
+  flinging, pull-to-refresh, and sheet dragging remain available.
 - settings controls update immediately and route changes avoid fade transitions
   on E-ink displays.
 - dark-theme cold start does not show a light `No Books` frame before bookshelf
