@@ -86,6 +86,7 @@ import moe.antimony.hoshi.features.sasayaki.SasayakiPlayer
 import moe.antimony.hoshi.features.sasayaki.SasayakiSettings
 import moe.antimony.hoshi.features.sasayaki.SasayakiSheet
 import moe.antimony.hoshi.features.sasayaki.SasayakiMatchDependencies
+import moe.antimony.hoshi.features.sasayaki.sasayakiDefaultSheetTab
 import moe.antimony.hoshi.features.sasayaki.sasayakiImageHoldMillis
 import kotlin.coroutines.resume
 import kotlin.math.roundToInt
@@ -1846,7 +1847,14 @@ fun ReaderWebView(
                 null
             },
             onSasayaki = if (sasayakiSettings.enabled && bookRoot != null) {
-                stateHolder::openSasayakiFromMenu
+                {
+                    stateHolder.openSasayakiFromMenu(
+                        sasayakiDefaultSheetTab(
+                            hasAudio = sasayakiPlayer?.hasAudio == true,
+                            hasChapters = sasayakiAudiobookChapters.isNotEmpty(),
+                        ),
+                    )
+                }
             } else {
                 null
             },
@@ -1873,6 +1881,8 @@ fun ReaderWebView(
                 currentPosition = readerPosition.displayedPosition,
                 progressDisplay = progressDisplay,
                 highlights = highlights.orEmpty(),
+                selectedTab = stateHolder.selectedGoToTab,
+                onSelectedTabChange = stateHolder::selectGoToTab,
                 onChapterJump = { target, fragment ->
                     closeLookupPopupsAndSelection()
                     jumpToPositionWithHistory(target, fragment)
@@ -1920,6 +1930,8 @@ fun ReaderWebView(
                     )
                 },
                 chapters = sasayakiAudiobookChapters,
+                selectedTab = stateHolder.selectedSasayakiTab,
+                onSelectedTabChange = stateHolder::selectSasayakiTab,
                 onSubtitleMatchUpdated = { matchData ->
                     sasayakiMatchData = matchData
                     sasayakiSheetMatchData = matchData

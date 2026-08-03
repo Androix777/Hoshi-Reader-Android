@@ -10,6 +10,7 @@ import moe.antimony.hoshi.epub.ReadingStatistics
 import moe.antimony.hoshi.epub.SasayakiMatch
 import moe.antimony.hoshi.features.dictionary.LookupPopupItem
 import moe.antimony.hoshi.features.dictionary.LookupPopupState
+import moe.antimony.hoshi.features.sasayaki.SasayakiSheetTab
 import moe.antimony.hoshi.features.sasayaki.SasayakiSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -948,9 +949,66 @@ class ReaderWebViewStateHolderTest {
 
         holder.dismissGoTo()
         holder.showReaderMenu()
-        holder.openSasayakiFromMenu()
+        holder.openSasayakiFromMenu(SasayakiSheetTab.Resources)
         assertFalse(holder.showReaderMenu)
         assertTrue(holder.showSasayaki)
+    }
+
+    @Test
+    fun contentsTabSelectionSurvivesSheetDismissalWithinReaderSession() {
+        val holder = stateHolder()
+
+        assertEquals(ReaderGoToTab.Chapters, holder.selectedGoToTab)
+        holder.openGoToFromMenu()
+        holder.selectGoToTab(ReaderGoToTab.Gallery)
+        holder.dismissGoTo()
+        holder.openGoToFromMenu()
+
+        assertEquals(ReaderGoToTab.Gallery, holder.selectedGoToTab)
+
+        holder.selectGoToTab(ReaderGoToTab.Search)
+        holder.dismissGoTo()
+        holder.openGoToFromMenu()
+
+        assertEquals(ReaderGoToTab.Search, holder.selectedGoToTab)
+    }
+
+    @Test
+    fun sasayakiFirstOpenUsesCurrentDefaultAndLaterOpensKeepExplicitSelection() {
+        val holder = stateHolder()
+
+        holder.openSasayakiFromMenu(SasayakiSheetTab.Chapters)
+        assertEquals(SasayakiSheetTab.Chapters, holder.selectedSasayakiTab)
+
+        holder.selectSasayakiTab(SasayakiSheetTab.Settings)
+        holder.dismissSasayaki()
+        holder.openSasayakiFromMenu(SasayakiSheetTab.Resources)
+
+        assertEquals(SasayakiSheetTab.Settings, holder.selectedSasayakiTab)
+    }
+
+    @Test
+    fun sasayakiDataChangesDoNotReplaceFirstOpenTabSelection() {
+        val holder = stateHolder()
+
+        holder.openSasayakiFromMenu(SasayakiSheetTab.Resources)
+        holder.openSasayakiFromMenu(SasayakiSheetTab.Chapters)
+
+        assertEquals(SasayakiSheetTab.Resources, holder.selectedSasayakiTab)
+    }
+
+    @Test
+    fun newReaderSessionResetsRememberedSheetTabs() {
+        val previousSession = stateHolder()
+        previousSession.selectGoToTab(ReaderGoToTab.Highlights)
+        previousSession.openSasayakiFromMenu(SasayakiSheetTab.Chapters)
+        previousSession.selectSasayakiTab(SasayakiSheetTab.Settings)
+
+        val newSession = stateHolder()
+
+        assertEquals(ReaderGoToTab.Chapters, newSession.selectedGoToTab)
+        newSession.openSasayakiFromMenu(SasayakiSheetTab.Resources)
+        assertEquals(SasayakiSheetTab.Resources, newSession.selectedSasayakiTab)
     }
 
     @Test

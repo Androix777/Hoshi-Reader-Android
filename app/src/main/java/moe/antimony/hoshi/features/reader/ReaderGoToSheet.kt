@@ -90,6 +90,8 @@ internal fun ReaderGoToSheet(
     currentPosition: ReaderChapterPosition,
     progressDisplay: ReaderProgressDisplay,
     highlights: List<ReaderHighlight>,
+    selectedTab: ReaderGoToTab,
+    onSelectedTabChange: (ReaderGoToTab) -> Unit,
     onChapterJump: (ReaderChapterPosition, String?) -> Unit,
     onCharacterJump: (Int) -> Unit,
     onSearchResultJump: (ReaderSearchResult) -> Unit,
@@ -98,7 +100,6 @@ internal fun ReaderGoToSheet(
     onGalleryImageSelected: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selectedTab by remember { mutableStateOf(readerGoToDefaultTab()) }
     var showJumpDialog by remember { mutableStateOf(false) }
     val coverBitmap = remember(book) { book.decodeCoverImageBitmap() }
     val searchState = remember(book) { ReaderSearchSheetState() }
@@ -143,7 +144,7 @@ internal fun ReaderGoToSheet(
         )
         ReaderGoToTabs(
             selectedTab = selectedTab,
-            onSelectedTabChange = { selectedTab = it },
+            onSelectedTabChange = onSelectedTabChange,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 10.dp),
         )
         when (selectedTab) {

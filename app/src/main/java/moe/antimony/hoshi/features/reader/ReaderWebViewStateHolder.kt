@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.IntSize
 import moe.antimony.hoshi.features.dictionary.LookupPopupItem
+import moe.antimony.hoshi.features.sasayaki.SasayakiSheetTab
 
 internal class ReaderWebViewStateHolder(
     initialSettings: ReaderSettings,
@@ -19,8 +20,16 @@ internal class ReaderWebViewStateHolder(
     var showGoTo by mutableStateOf(false)
         private set
 
+    var selectedGoToTab by mutableStateOf(readerGoToDefaultTab())
+        private set
+
     var showSasayaki by mutableStateOf(false)
         private set
+
+    var selectedSasayakiTab by mutableStateOf(SasayakiSheetTab.Resources)
+        private set
+
+    private var hasInitializedSasayakiTab = false
 
     var showStatistics by mutableStateOf(false)
         private set
@@ -121,6 +130,10 @@ internal class ReaderWebViewStateHolder(
         showGoTo = false
     }
 
+    fun selectGoToTab(tab: ReaderGoToTab) {
+        selectedGoToTab = tab
+    }
+
     fun openAppearanceFromMenu() {
         showReaderMenu = false
         showAppearance = true
@@ -130,13 +143,21 @@ internal class ReaderWebViewStateHolder(
         showAppearance = false
     }
 
-    fun openSasayakiFromMenu() {
+    fun openSasayakiFromMenu(initialTab: SasayakiSheetTab) {
         showReaderMenu = false
+        if (!hasInitializedSasayakiTab) {
+            selectedSasayakiTab = initialTab
+            hasInitializedSasayakiTab = true
+        }
         showSasayaki = true
     }
 
     fun dismissSasayaki() {
         showSasayaki = false
+    }
+
+    fun selectSasayakiTab(tab: SasayakiSheetTab) {
+        selectedSasayakiTab = tab
     }
 
     fun openStatisticsFromMenu() {
