@@ -53,6 +53,7 @@ internal interface BookshelfRepository {
         sortOption: BookSortOption,
         onLegacyBookMigrationProgress: (LegacyBookMigrationProgress) -> Unit = {},
     ): BookshelfLoadResult
+    suspend fun loadBookProgress(entries: List<BookEntry>): Map<String, Double>
     suspend fun loadRemoteBooks(localEntries: List<BookEntry>): RemoteBookshelfLoadResult
     suspend fun openBook(entry: BookEntry): String
     suspend fun importBook(uri: Uri): String
@@ -115,6 +116,10 @@ internal class AndroidBookshelfRepository @Inject constructor(
             shelves = shelves,
             settings = settingsRepository.settings.first(),
         )
+    }
+
+    override suspend fun loadBookProgress(entries: List<BookEntry>): Map<String, Double> = withContext(ioDispatcher) {
+        loadBookProgressById(entries, bookRepository)
     }
 
     override suspend fun loadRemoteBooks(localEntries: List<BookEntry>): RemoteBookshelfLoadResult = withContext(ioDispatcher) {

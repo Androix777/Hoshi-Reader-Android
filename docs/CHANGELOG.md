@@ -26,6 +26,8 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ### Fixed
 
+- Keep manual bookshelf sync from rebuilding the entire shelf, while refreshing
+  imported reading progress in place.
 - Keep large bookshelves smooth during repeated scrolling by reusing
   size-appropriate persistent cover thumbnails instead of decoding original
   covers again after they leave memory, while recovering from transient
