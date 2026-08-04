@@ -8,6 +8,7 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ### Added
 
+- Add the option to create a new shelf while moving one or more selected books.
 - Add a Reader image gallery, true table-of-contents chapter ranges, and optional
   current-chapter progress in Reader chrome and statistics.
 - Add a configurable daily statistics reset time and pause reading statistics
