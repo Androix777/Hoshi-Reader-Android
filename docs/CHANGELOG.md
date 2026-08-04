@@ -6,6 +6,8 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ## [Unreleased]
 
+## [v1.3.2] - 2026-08-04
+
 ### Added
 
 - Add the option to create a new shelf while moving one or more selected books.
