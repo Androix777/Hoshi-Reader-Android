@@ -192,7 +192,7 @@ window.hoshiSelection = {
     },
     scanDelimiters: '。、！？…‥「」『』（）()【】〈〉《》〔〕｛｝{}［］[]・：；:;，,.─\n\r',
     sentenceDelimiters: '。！？.!?\n\r',
-    trailingSentenceChars: '。、！？…‥」』）)】〉》〕｝}］]',
+    trailingSentenceChars: '。、！？」』）)】〉》〕｝}］]',
     brackets: {'「':'」', '『': '』', '（':'）', '(':')', '【':'】', '〈':'〉', '《':'》', '〔':'〕', '｛':'｝', '{':'}', '［':'］', '[':']'},
 
     configure(options = {}) {
@@ -336,7 +336,7 @@ window.hoshiSelection = {
 
     findParagraph(node) {
         let el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
-        return el?.closest('p, .glossary-content') || null;
+        return el?.closest('p, .glossary-content, .expr-tag') || null;
     },
 
     createWalker(rootNode) {

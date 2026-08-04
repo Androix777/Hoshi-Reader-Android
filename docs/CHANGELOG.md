@@ -26,6 +26,9 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ### Fixed
 
+- Keep Reader progress, search, and Sasayaki character offsets stable around
+  numeric HTML entities, and keep lookup sentence expansion and recursive
+  expression-tag scanning within the selected text boundary.
 - Keep manual bookshelf sync from rebuilding the entire shelf, while refreshing
   imported reading progress in place.
 - Keep large bookshelves smooth during repeated scrolling by reusing

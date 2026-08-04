@@ -283,50 +283,7 @@ Validation:
 - Mine clips through AnkiDroid and AnkiConnect and verify valid MP3 playback,
   MIME type, hashed filenames, and sentence range expansion.
 
-### 6. Shared Reader/lookup text-boundary corrections
-
-Status: pending Android sync.
-
-Commits:
-
-- `4940ab7` - stop treating ellipsis and period as trailing sentence characters.
-- `6655ffd` - remove numeric HTML entities before matchable character counting.
-- `3bff390` - keep lookup scanning inside an expression tag.
-
-Dependency/value reasoning:
-
-- These are small shared semantic fixes with high leverage across progress,
-  search, Sasayaki matching, lookup sentence context, and Anki cloze offsets.
-
-iOS behavior to mirror:
-
-- Numeric entities such as `&#12354;`/`&#x3042;` do not contribute their encoded
-  digits to normalized character counts.
-- Sentence expansion does not absorb a trailing `…` or `.` beyond the selected
-  sentence, and recursive lookup inside `.expr-tag` does not scan into adjacent
-  expression tags.
-
-Android current gap:
-
-- `visibleReaderText()` in `epub/ReaderTextFilter.kt` strips tags and a few named
-  entities but leaves numeric entity text, whose digits then pass
-  `isReaderMatchableCodePoint()`.
-- Shared `app/src/main/assets/hoshi-web/shared/selection.js` still includes `…`
-  and `.` in `trailingSentenceChars` and `findParagraph()` scopes only `p` and
-  `.glossary-content`, not `.expr-tag`.
-
-Suggested slice:
-
-- Update the Kotlin and JS shared normalization/boundary primitives together and
-  add cross-language fixtures proving identical code-point offsets.
-
-Validation:
-
-- Progress/search/Sasayaki fixtures containing decimal/hex entities, ruby,
-  supplementary characters, ellipses, periods, and adjacent popup expression
-  tags; verify lookup sentence and Anki cloze offsets.
-
-### 7. Bookshelf cover privacy and fallback artwork
+### 6. Bookshelf cover privacy and fallback artwork
 
 Status: pending Android sync.
 
@@ -365,7 +322,7 @@ Validation:
 - Missing-cover books with/without authors, legacy metadata, local/remote books,
   collapsed shelf previews, multi-select, Show/Blur/Hide, dark/e-ink themes.
 
-### 8. Lookup popup two-column layout and visual sizing
+### 7. Lookup popup two-column layout and visual sizing
 
 Status: pending Android sync.
 
@@ -410,7 +367,7 @@ Validation:
 - Run `node --test app/src/test/js/*.test.mjs`, focused settings tests,
   localization tests, and lint.
 
-### 9. Reader route open-failure fallback
+### 8. Reader route open-failure fallback
 
 Status: pending Android sync.
 
@@ -444,7 +401,7 @@ Validation:
 - Missing/corrupt book, working Close, normal Reader open/close, Android Back,
   bookshelf state preservation, and bookmark refresh.
 
-### 10. Google Drive timeout and automatic-refresh error suppression
+### 9. Google Drive timeout and automatic-refresh error suppression
 
 Status: pending Android sync.
 
@@ -482,7 +439,7 @@ Validation:
 - Automatic refresh offline, slow token/list requests, and connection loss;
   manual connect/refresh/import/export/delete must still show actionable errors.
 
-### 11. Reader WebView line-box CSS parity
+### 10. Reader WebView line-box CSS parity
 
 Status: pending Android sync.
 
@@ -533,7 +490,6 @@ Validation:
 | `947898c` | 2026-07-01 | Export Sasayaki mining clips as MP3 | Pending Android MP3 encoder/export path |
 | `4a5cfde` | 2026-07-14 | Honor media-control skip mode | Pending MediaSession command routing |
 | `a9a0747`, `d7fe3f2` | 2026-07-28 | MP4/TXT imports and larger playback ranges | Pending SAF/storage/range updates |
-| `4940ab7`, `6655ffd`, `3bff390` | 2026-07-01 / 2026-07-07 / 2026-07-24 | Text normalization and lookup boundary fixes | Pending shared Kotlin/JS semantics |
 | `c6b29c8`, `1db2cd3` | 2026-07-26 | Cover fallback and Show/Blur/Hide modes | Pending metadata/settings/Compose UI |
 | `ed25036`, `8d1442e` | 2026-06-14 / 2026-07-01 | Popup masonry redesign and theme accents | Pending settings/assets/height range |
 | `53fdb72` | 2026-06-15 | Closeable Reader open-failure view | Pending route error UI |
@@ -544,18 +500,21 @@ Validation:
 
 1. Dictionary categories, Kanji dictionaries, and complete pitch data.
 2. Multiple Anki card formats and advanced handlebars.
-3. Shared Reader/lookup text-boundary corrections.
-4. Reader paginated paragraph splitting and explicit font readiness.
-5. Reader furigana reveal mode.
-6. Sasayaki import, playback ranges, media controls, and MP3 mining clips.
-7. Bookshelf cover privacy and fallback artwork.
-8. Lookup popup two-column layout and visual sizing.
-9. Reader route open-failure fallback.
-10. Google Drive timeout and automatic-refresh error suppression.
-11. Reader WebView line-box CSS parity.
+3. Reader paginated paragraph splitting and explicit font readiness.
+4. Reader furigana reveal mode.
+5. Sasayaki import, playback ranges, media controls, and MP3 mining clips.
+6. Bookshelf cover privacy and fallback artwork.
+7. Lookup popup two-column layout and visual sizing.
+8. Reader route open-failure fallback.
+9. Google Drive timeout and automatic-refresh error suppression.
+10. Reader WebView line-box CSS parity.
 
 ## Covered Or No Android Action
 
+- `4940ab7`, `6655ffd`, `3bff390`: Android now removes numeric HTML entities
+  before shared matchable character counting, leaves trailing ellipses and
+  periods outside the selected lookup sentence, and scopes recursive lookup to
+  the active `.expr-tag`.
 - `b928010`: Android now serializes original-cover derivative generation in
   `BookCoverThumbnailStore` and bounds Coil bitmap decoding in the shared
   process-wide image loader.

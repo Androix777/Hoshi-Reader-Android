@@ -123,6 +123,67 @@ function loadSharedSelectionWithoutPolicy() {
     return window.hoshiSelection;
 }
 
+function loadAdjacentExpressionTags() {
+    const expressionElement = (text) => ({
+        nodeType: 1,
+        textContent: text,
+        closest(selector) {
+            return selector.split(',').map((item) => item.trim()).includes('.expr-tag') ? this : null;
+        },
+        querySelectorAll() {
+            return [];
+        },
+    });
+    const firstExpression = expressionElement('猫');
+    const secondExpression = expressionElement('犬');
+    const firstNode = { nodeType: 3, textContent: '猫', parentElement: firstExpression };
+    const secondNode = { nodeType: 3, textContent: '犬', parentElement: secondExpression };
+    const body = {
+        nodeType: 1,
+        textContent: '猫犬',
+        querySelectorAll() {
+            return [];
+        },
+    };
+    const document = {
+        body,
+        documentElement: {},
+        createTreeWalker(root) {
+            if (root === firstExpression) return treeWalker([firstNode]);
+            if (root === secondExpression) return treeWalker([secondNode]);
+            return treeWalker([firstNode, secondNode]);
+        },
+        elementFromPoint() {
+            return hitElement([]);
+        },
+        addEventListener() {},
+    };
+    const window = {
+        getComputedStyle() {
+            return { writingMode: 'horizontal-tb' };
+        },
+    };
+
+    vm.runInNewContext(selectionSource(), {
+        CSS: {},
+        document,
+        getSelection() {
+            return null;
+        },
+        Node: { TEXT_NODE: 3 },
+        NodeFilter: { SHOW_TEXT: 4, FILTER_ACCEPT: 1, FILTER_REJECT: 2 },
+        window,
+    });
+
+    const selection = window.hoshiSelection;
+    selection.clearSelection = () => {};
+    selection.getCharacterAtPoint = () => ({ node: firstNode, offset: 0 });
+    selection.getSelectionRect = () => ({ x: 0, y: 0, width: 1, height: 1 });
+    selection.postTextSelected = () => {};
+    window.scanNonJapaneseText = false;
+    return selection;
+}
+
 function scanTextFromOffset(text, offset, configureOptions = {}) {
     const { document, selection, textNode, window } = loadSelection(text);
     document.pointElement = hitElement([]);
@@ -188,6 +249,22 @@ test('reader selection trims leading unmatched opening quote brackets from mined
 
     assert.equal(context.sentence, 'でもはいらないよ。');
     assert.equal(context.sentenceOffset, 0);
+});
+
+test('reader selection leaves ellipses and periods after the selected sentence', () => {
+    const ellipsisContext = sentenceContext('選択。…次。', '選択');
+    assert.equal(ellipsisContext.sentence, '選択。');
+    assert.equal(ellipsisContext.sentenceOffset, 0);
+
+    const periodContext = sentenceContext('選択！.次。', '選択');
+    assert.equal(periodContext.sentence, '選択！');
+    assert.equal(periodContext.sentenceOffset, 0);
+});
+
+test('recursive lookup scanning stays inside one expression tag', () => {
+    const selection = loadAdjacentExpressionTags();
+
+    assert.equal(selection.selectText(1, 1, 80), '猫');
 });
 
 test('shared selection posts popup payloads through the webkit bridge', () => {
