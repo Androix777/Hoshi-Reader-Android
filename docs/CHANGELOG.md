@@ -20,6 +20,8 @@ Historical release notes before v1.3.0 live in [CHANGELOG_ARCHIVE.md](CHANGELOG_
 
 ### Changed
 
+- Expand Sasayaki delay adjustment to -4...4 seconds and playback speed to
+  0.5...3x.
 - Rename the Reader Go to panel to Contents, order its tabs as Chapters,
   Highlights, Gallery, and Search, and remove overscroll deformation from
   scrolling surfaces throughout the app.
