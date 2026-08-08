@@ -128,123 +128,89 @@ degrades quietly offline.
 JS tests must cover ruby, surrogate pairs, tokens spanning multiple text nodes,
 and offset stability after wrapping.
 
-Decisions taken while implementing the browser side:
+Constraints worth keeping:
 
-- Paragraph boundaries come from a tag-name list, not `getComputedStyle`.
-  Resolving style for every element in a chapter costs a full style pass, and a
-  mis-classified element only merges or splits a parse unit — offsets stay
-  correct either way. `br` counts as a boundary so no token spans a line break.
-- Posted text folds whitespace the way CSS `white-space: normal` renders it,
+- Paragraph boundaries come from a tag-name list, not `getComputedStyle`, which
+  would cost a style pass per chapter. A mis-classified element only merges or
+  splits a parse unit; offsets stay correct. `br` is a boundary, so no token
+  spans a line break.
+- Posted text folds whitespace as CSS `white-space: normal` renders it,
   including the segment break transformation that deletes a line break between
-  two wide characters. Posting node data verbatim instead would hand the parser
-  a break in the middle of `食\nべる` wherever the EPUB happens to wrap.
-- Folded-away characters get no fragment. Fragments need only be ordered and
-  non-overlapping; tiling their node buys nothing and complicates folding.
-- All token ranges are resolved before the DOM is touched, then applied back to
-  front. `splitText` leaves the prefix in the original node, so every range not
-  yet applied still points at the right node and offset.
-- Rubies are patched in document order in a pass of their own. Without it the
-  back-to-front wrapping pass would give a ruby shared by two tokens to the
-  later one.
-- State CSS uses `!important`, narrowly. The reader forces
-  `color: var(--hoshi-text-color) !important` on `html, body` and EPUB
-  stylesheets set colours at arbitrary specificity; a state colour that loses to
-  either is worse than none. Mature and Mastered get no rule, so the override
-  only lands where a state was deliberately given a colour.
-- Palette is the extension's Toy Box preset — the one colour-only preset, so it
-  needs no underline or opacity effect.
-
-Decisions taken while wiring it up:
-
-- Paragraphs are collected twice: once to post, once to apply. Restoring
-  progress inserts and removes a marker, Sasayaki wraps cues and the reader
-  normalizes text nodes afterwards — all while the parse is in flight, all
-  invalidating held fragments. None of them change the text, so re-collecting
-  and comparing the texts is both cheaper and safer than trying to keep
-  fragments alive. A text mismatch colours nothing.
-- Requests carry an id and the controller only accepts the newest. That, plus
-  cancelling the previous job, is what discards a chapter's answer that arrives
-  after the reader moved on.
-- The scripts are injected unconditionally and do nothing until the bridge
-  answers. Gating on the setting would mean threading it through every layer
-  that builds the shell script, for ~6 KB.
+  two wide characters — otherwise the parser sees a break inside `食\nべる`
+  wherever the EPUB happens to wrap. Folded-away characters get no fragment;
+  fragments need only be ordered and non-overlapping.
+- Token ranges are all resolved before the DOM is touched, then applied back to
+  front, since `splitText` leaves the prefix in the original node. Rubies are
+  patched in a separate forward pass, or a ruby shared by two tokens would go
+  to the later one.
+- State CSS uses `!important` narrowly: the reader forces
+  `color: var(--hoshi-text-color) !important` on `html, body`, and EPUB
+  stylesheets set colours at arbitrary specificity. Mature and Mastered get no
+  rule, so the override only lands where a state has a colour. The palette is
+  the extension's Toy Box preset, the one that needs no underline or opacity.
+- Paragraphs are collected once to post and again to apply, and coloured only
+  if the text still matches. Progress restore, Sasayaki and highlights all
+  rearrange text nodes mid-flight without changing text.
+- The scripts are injected whether or not Jiten is on; gating would thread the
+  setting through every layer that builds the shell script.
 - Paragraphs with no kana and no kanji are never posted, and their slot in the
-  result is filled with an empty list. A shifted result would colour the wrong
-  paragraph, so alignment is by index, not by position among the posted ones.
-- A paragraph over the request size still travels alone rather than being split:
-  splitting renumbers the offsets against text the reader never posted.
-- `applySasayakiCues` is re-run after colouring, via a recorded copy of the cues
-  the reader last passed in. Sasayaki's `cueSourceRanges` hold text nodes and
-  offsets that a split invalidates, and the function rebuilds all of it from
-  scratch. Highlights need no repair: they hold wrapper elements, which survive
-  a split of the text inside them.
+  result is an empty list: alignment is by index, not by position among the
+  posted ones. A paragraph over the request size travels alone rather than
+  being split, which would renumber offsets against text never posted.
+- `applySasayakiCues` is re-run after colouring, from a recorded copy of the
+  cues. Its `cueSourceRanges` hold text nodes and offsets that a split
+  invalidates, and it rebuilds them from scratch. Highlights hold wrapper
+  elements and need no repair.
 
 Verified on a device in both view modes: text colours, and the saved position is
 unchanged before and after. The visual novel runtime is still uncoloured — it
 never calls `start`, having no restore scripts.
 
-**2b. Parsing what is about to be read.** A chapter is not a unit of work: both
-view modes load a whole chapter into the page, and a book can be one chapter of
-a million characters. Text is parsed as it approaches the viewport instead,
-after the browser extension's `IntersectionObserver` scoping in
-`apps/parser/base.parser.ts`.
+**2b. Parsing what is about to be read.** Both view modes load a whole chapter
+into the page and a book may be one chapter of a million characters, so the
+chapter is not a unit of work. Text is parsed as it approaches the viewport,
+after the extension's `IntersectionObserver` scoping in `apps/parser/base.parser.ts`.
 
-- A parse unit is the deepest element with no block child that carries text —
-  in prose, one paragraph. Descending is the point: a chapter wrapped in one
-  `div` would otherwise be a single unit again. `br` and `hr` carry no text, so
-  they are not containers and do not strand the text around them.
-- `rootMargin` is `200%`, which is "about two screens ahead" in continuous and
-  "about two pages ahead" in paginated, since a page is a viewport. Fetching
-  too early costs one request; too late is visibly uncoloured text.
-- The observer's root must be the element the reader scrolls
-  (`hoshiReader.getScrollContext().scrollEl`), which paginated mode both scrolls
-  and clips to. `rootMargin` expands the root, not an intermediate clip, so
-  rooted at the viewport the lookahead silently becomes none and colouring
-  lands after each page turn. Continuous scrolls the viewport, where the
-  default root is already right.
-- Units that come into reach within 500ms travel as one request. One request
-  per paragraph trades a chapter of work for a chapter of round trips, and a
-  window shorter than a scroll batches nothing: paragraphs cross the margin
-  about a tenth of a second apart. Kotlin still splits the result into
-  API-sized batches, so the window controls round trips, not request size.
-- `JitenRepository` serializes every caller. With units arriving as the reader
-  scrolls, that plus cancelling what leaves the viewport is what bounds the
-  request rate — roughly one in flight, whatever the dispatch rate.
-- Colouring defers `buildNodeOffsets`, and the controller runs it, plus the
-  Sasayaki repair, once per burst. Both cost a pass over the chapter, which
-  per paragraph would be quadratic.
-- Request ids are opaque strings with a per-page-load prefix. A chapter change
-  builds a fresh controller whose counter restarts, and its first request
-  retires the previous chapter's queued work; the prefix is what stops an
-  answer landing on the chapter that replaced the one that asked.
-- A failed request must be reported back. The observer fires once for text
-  crossing into view and never again for text that has not moved, so silence
-  leaves that text uncoloured for as long as it stays on screen — the failure
-  mode an offline stretch produces, and one that survives the network coming
-  back. An empty answer is settled rather than failed: Jiten switched off is
-  not something a retry fixes.
-- Offline is a normal mode for this reader, not an error. `navigator.onLine`
-  skips requests certain to fail, so an offline hour costs a boolean read now
-  and then rather than a request; the `online` event, not a timer, is what ends
-  the wait. Retries back off from 5s to 2min for the other case, where the
-  browser claims a network that goes nowhere.
-- A pending retry blocks dispatching, not just sweeping. Text keeps arriving as
-  the reader scrolls, so without that a network the browser believes in but
-  cannot reach would cost a request per screenful — the backoff would pace only
-  the sweep while scrolling routed around it.
-- Retrying stops while the page is hidden. The reader never pauses its WebView,
-  so a book left open offline would otherwise keep probing in the background;
-  `visibilitychange` puts the work down and picks it back up.
-- Once the backoff runs out of room the sweep tries regardless of `onLine`.
-  That flag is reported by the WebView and can be wrong, and without the probe
-  a stuck `false` means a chapter that never colours with nothing to show why —
-  at that delay, insurance against a silent permanent failure costs one request
-  every couple of minutes.
+Scoping:
 
-Still uncached: leaving and re-entering a chapter re-parses it, and a chapter
-first read offline stays uncoloured until it is read again online. Card states
-outlive a session, so a store keyed by word and reading would colour known words
-with no network at all — the real offline answer, and bigger than this slice.
+- A parse unit is the deepest element with no text-carrying block child — in
+  prose, one paragraph. Without descending, a chapter wrapped in one `div` is a
+  single unit again. `br` and `hr` hold no text, so they are not containers.
+- `rootMargin: 200%` reads as two screens ahead in continuous and two pages
+  ahead in paginated, a page being a viewport.
+- The observer root must be the element the reader scrolls, which paginated
+  mode also clips to. `rootMargin` expands the root, not an intermediate clip,
+  so a viewport root gives paginated no lookahead at all.
+- Units entering view within 500ms travel as one request; the window has to
+  span a scroll, since paragraphs cross the margin about 100ms apart. Kotlin
+  still splits the result into API-sized batches, so this paces round trips,
+  not request size.
+- `JitenRepository` holds the API to one request at a time. With cancellation
+  on leaving the viewport, that bounds the request rate whatever the reader
+  does.
+- Colouring defers `buildNodeOffsets`; the controller runs it and the Sasayaki
+  repair once per burst. Both are chapter-wide passes.
+
+Failure and offline, which is a normal mode here:
+
+- Kotlin answers every request, with tokens or a failure. The observer fires
+  once for text crossing into view, so silence leaves that text uncoloured for
+  as long as it stays on screen. An empty answer settles rather than fails —
+  Jiten switched off is not fixed by asking again.
+- `navigator.onLine` skips requests certain to fail; the `online` event ends
+  the wait. Retries back off 5s→2min for the case where the browser claims a
+  network that goes nowhere.
+- A pending retry blocks dispatching, not just the sweep. Otherwise scrolling
+  routes around the backoff, since new text keeps arriving.
+- `visibilitychange` stops retrying while the page is hidden; the reader does
+  not pause its WebView.
+- At the backoff ceiling the sweep ignores `onLine`. The flag can be wrong, and
+  a stuck `false` would otherwise mean a chapter that never colours.
+
+Still uncached: re-entering a chapter re-parses it, and a chapter first read
+offline stays uncoloured until read again online. Card states outlive a session,
+so a store keyed by word and reading would colour known words with no network —
+the real offline answer, and bigger than this slice.
 
 **3. Mode switch.** The switch controls tap behavior only: on, a tap opens the
 Jiten popup; off, the dictionary popup. Colouring stays applied either way.

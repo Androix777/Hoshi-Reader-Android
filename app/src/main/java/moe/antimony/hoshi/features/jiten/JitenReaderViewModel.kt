@@ -23,9 +23,8 @@ internal class JitenReaderViewModel @Inject constructor(
     private var session: String? = null
 
     /**
-     * A new page load supersedes everything still queued for the old one. The
-     * reader never says goodbye — the page is simply replaced — so the first
-     * request of a new chapter is what retires the previous chapter's work.
+     * Retires the previous page load's work. A replaced page never says
+     * goodbye, so the new one announcing itself is the only signal there is.
      */
     fun beginSession(sessionId: String) {
         if (session == sessionId) return
@@ -34,10 +33,9 @@ internal class JitenReaderViewModel @Inject constructor(
     }
 
     /**
-     * [onFailed] is not cosmetic: the reader watches text for one crossing into
-     * view and no more, so a request that never comes back leaves that text
-     * uncoloured for as long as it stays on screen. Saying so is what lets the
-     * reader ask again.
+     * Answers with tokens or with [onFailed], never with silence: the reader
+     * holds the text as pending until it hears back, and only asks again once
+     * told the attempt failed.
      */
     fun parse(
         requestId: String,
@@ -53,13 +51,13 @@ internal class JitenReaderViewModel @Inject constructor(
                 val tokens = try {
                     repository.parseChapter(paragraphs)
                 } catch (error: JitenApiException) {
-                    // The page says nothing about it: connection problems are
-                    // the settings screen's story to tell.
+                    // Connection problems are the settings screen's story to
+                    // tell, not the page's.
                     onFailed()
                     return@launch
                 }
-                // Empty means Jiten is switched off or the text holds nothing to
-                // parse — settled, not failed, and retrying would never help.
+                // Empty is an answer, not a failure: Jiten is off, or there was
+                // nothing to parse. Neither is fixed by asking again.
                 onTokens(json.encodeToString(tokens.toReaderTokens()))
             } finally {
                 jobs.remove(requestId)

@@ -14,8 +14,9 @@
  * that carries several states at once.
  */
 
+/* Taps are handled in script; the browser's own tap highlight is noise here. */
 .jiten-word {
-    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .jiten-word.jiten-young {

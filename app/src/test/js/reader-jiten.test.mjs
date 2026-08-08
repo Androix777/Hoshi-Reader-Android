@@ -120,12 +120,7 @@ function load({ withBridge = true, withObserver = true } = {}) {
     harness.body = body;
     harness.enter = (node) => harness.notify([{ target: node, isIntersecting: true }]);
     harness.exit = (node) => harness.notify([{ target: node, isIntersecting: false }]);
-    /**
-     * Runs the timers due within `maxDelay`. The default runs everything; the
-     * bound is how a test says "time passed, but not enough for the backoff" —
-     * firing a five-second retry in the same breath as a half-second dispatch
-     * would hide exactly the behaviour those tests are about.
-     */
+    /** Runs the timers due within `maxDelay`; the default runs all of them. */
     harness.runTimers = (maxDelay = Infinity) => {
         const due = Array.from(harness.timers).filter(([, timer]) => timer.delay <= maxDelay);
         due.forEach(([handle]) => harness.timers.delete(handle));

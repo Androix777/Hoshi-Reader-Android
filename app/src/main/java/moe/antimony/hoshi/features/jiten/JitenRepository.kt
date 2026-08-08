@@ -20,10 +20,9 @@ class JitenRepository @Inject constructor(
     private val settingsRepository: JitenSettingsRepository,
 ) {
     /**
-     * Serializes every caller. The reader asks for many small units as it
-     * scrolls, and Jiten is one hosted service with its own limits; requests
-     * queue here rather than arriving together. Waiters are served in order, so
-     * the text nearest the reader is also parsed first.
+     * Holds the API to one request at a time, in the order it was asked. The
+     * reader asks for many small units as it scrolls; Jiten is one hosted
+     * service with its own limits.
      */
     private val requests = Mutex()
 

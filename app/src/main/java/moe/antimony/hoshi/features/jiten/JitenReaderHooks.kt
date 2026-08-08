@@ -13,10 +13,8 @@ import kotlinx.serialization.json.Json
 internal const val JitenReaderBridgeName = "HoshiJiten"
 
 /**
- * What the controller asks of Kotlin. Request ids are opaque strings carrying a
- * per-page-load prefix: a chapter change builds a new controller whose counter
- * restarts, and an answer must never land on the chapter that replaced the one
- * that asked for it.
+ * What the controller asks of Kotlin. Request ids are opaque strings, unique
+ * per page load, and are echoed back untouched.
  */
 internal interface JitenReaderRequests {
     fun beginSession(sessionId: String)
@@ -59,10 +57,7 @@ internal fun WebView.removeJitenReaderBridge() {
     removeJavascriptInterface(JitenReaderBridgeName)
 }
 
-/**
- * Ties the controller's requests to a view model and the WebView that asked, so
- * upstream reader code only has to hand over the two.
- */
+/** Ties the controller's requests to a view model and the WebView that asked. */
 internal fun jitenReaderRequests(
     viewModel: JitenReaderViewModel,
     webView: WebView,

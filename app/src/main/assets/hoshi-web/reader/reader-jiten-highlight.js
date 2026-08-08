@@ -116,9 +116,8 @@
    * The paragraph list is consumed: applying splits text nodes, so a caller
    * that wants to recolour must collect paragraphs again.
    *
-   * `options.deferOffsets` leaves `buildNodeOffsets` to the caller. Colouring a
-   * chapter one paragraph at a time would otherwise pay for a pass over the
-   * whole document per paragraph.
+   * `options.deferOffsets` leaves the `buildNodeOffsets` pass to the caller,
+   * for callers colouring several elements in a row.
    */
   function applyTokens(root, paragraphs, tokensByParagraph, options) {
     ensureStyles();
