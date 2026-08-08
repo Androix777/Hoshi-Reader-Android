@@ -746,4 +746,17 @@
     <string name="jiten_action_never_forget">永不忘记</string>
     <string name="jiten_action_blacklist">黑名单</string>
     <string name="jiten_action_forget">忘记</string>
+    <string name="jiten_word_colors">词语颜色</string>
+    <string name="jiten_word_colors_description">为每种 Jiten 卡片状态选择文字和背景颜色。</string>
+    <string name="jiten_color_custom">自定义颜色</string>
+    <string name="jiten_color_reader_default">阅读器默认</string>
+    <string name="jiten_color_dialog_title">%1$s — %2$s</string>
+    <string name="jiten_state_new">新词</string>
+    <string name="jiten_state_young">学习中</string>
+    <string name="jiten_state_mature">熟悉</string>
+    <string name="jiten_state_mastered">已掌握</string>
+    <string name="jiten_state_due">待复习</string>
+    <string name="jiten_state_blacklisted">黑名单</string>
+    <string name="jiten_state_redundant">冗余</string>
+    <string name="jiten_state_suspended">已暂停</string>
 </resources>

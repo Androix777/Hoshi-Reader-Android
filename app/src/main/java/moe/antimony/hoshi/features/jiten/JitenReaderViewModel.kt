@@ -6,6 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -29,6 +31,9 @@ internal class JitenReaderViewModel @Inject constructor(
         started = SharingStarted.Eagerly,
         initialValue = JitenSettings(),
     )
+    val styleCss: StateFlow<String> = settings
+        .map(JitenSettings::readerStyleCss)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, JitenSettings().readerStyleCss())
 
     /**
      * Retires the previous page load's work. A replaced page never says
@@ -85,8 +90,10 @@ internal class JitenReaderViewModel @Inject constructor(
      */
     fun cardJson(key: JitenWordKey): String? =
         repository.card(key)?.let { card ->
-            json.encodeToString(card.toPopupCard(settings.value.visibleActions))
+            json.encodeToString(card.toPopupCard(settings.value))
         }
+
+    fun currentStyleCss(): String = styleCss.value
 
     /**
      * Carries out a card action, answering with the resulting state names or

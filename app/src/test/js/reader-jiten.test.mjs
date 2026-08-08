@@ -32,6 +32,7 @@ function load({ withBridge = true, withObserver = true } = {}) {
         delays: [],
         listeners: {},
         offsetBuilds: 0,
+        styleCalls: [],
     };
     const body = element('BODY');
     const window = {
@@ -61,6 +62,10 @@ function load({ withBridge = true, withObserver = true } = {}) {
             collectParagraphs: (node) => (node.paragraphs || []).map((text) => ({ text, fragments: [] })),
         },
         hoshiReaderJitenHighlight: {
+            setStyles(css) {
+                harness.styleCalls.push(css);
+                return css.length;
+            },
             applyTokens(root, paragraphs, tokens, options) {
                 harness.applyCalls.push({ root, paragraphs, tokens, options });
                 return tokens.reduce((total, paragraph) => total + paragraph.length, 0);
@@ -81,6 +86,9 @@ function load({ withBridge = true, withObserver = true } = {}) {
             },
             cancel(requestId) {
                 harness.cancelCalls.push(requestId);
+            },
+            styles() {
+                return '.jiten-word.jiten-new { color: #123456 !important; }';
             },
         };
     }
@@ -144,6 +152,14 @@ test('jiten controller parses nothing until text approaches the viewport', () =>
     assert.equal(harness.observed.length, 2);
     // A chapter of any size costs nothing until the reader gets there.
     assert.equal(harness.parseCalls.length, 0);
+});
+
+test('jiten controller applies current state styles when it starts', () => {
+    const harness = load();
+
+    harness.jiten.start();
+
+    assert.deepEqual(harness.styleCalls, ['.jiten-word.jiten-new { color: #123456 !important; }']);
 });
 
 test('jiten controller descends past a wrapper into real paragraphs', () => {

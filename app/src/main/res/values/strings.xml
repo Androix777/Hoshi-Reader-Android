@@ -748,4 +748,17 @@
     <string name="jiten_action_never_forget">Never forget</string>
     <string name="jiten_action_blacklist">Blacklist</string>
     <string name="jiten_action_forget">Forget</string>
+    <string name="jiten_word_colors">Word colours</string>
+    <string name="jiten_word_colors_description">Choose text and background colours for every Jiten card state.</string>
+    <string name="jiten_color_custom">Custom colour</string>
+    <string name="jiten_color_reader_default">Reader default</string>
+    <string name="jiten_color_dialog_title">%1$s — %2$s</string>
+    <string name="jiten_state_new">New</string>
+    <string name="jiten_state_young">Young</string>
+    <string name="jiten_state_mature">Mature</string>
+    <string name="jiten_state_mastered">Mastered</string>
+    <string name="jiten_state_due">Due</string>
+    <string name="jiten_state_blacklisted">Blacklisted</string>
+    <string name="jiten_state_redundant">Redundant</string>
+    <string name="jiten_state_suspended">Suspended</string>
 </resources>

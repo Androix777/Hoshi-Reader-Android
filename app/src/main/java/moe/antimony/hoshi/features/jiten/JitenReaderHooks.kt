@@ -20,6 +20,7 @@ internal interface JitenReaderRequests {
     fun beginSession(sessionId: String)
     fun parse(requestId: String, paragraphsJson: String)
     fun cancel(requestId: String)
+    fun styles(): String
 }
 
 /** For reader previews and tests, which have no view model to answer with. */
@@ -27,26 +28,32 @@ internal object NoJitenReaderRequests : JitenReaderRequests {
     override fun beginSession(sessionId: String) = Unit
     override fun parse(requestId: String, paragraphsJson: String) = Unit
     override fun cancel(requestId: String) = Unit
+    override fun styles(): String = ""
 }
 
 private class JitenReaderBridge(
     private val webView: WebView,
-    private val requests: (WebView) -> JitenReaderRequests,
+    requests: (WebView) -> JitenReaderRequests,
 ) {
+    private val delegate = requests(webView)
+
     @JavascriptInterface
     fun beginSession(sessionId: String) {
-        webView.post { requests(webView).beginSession(sessionId) }
+        webView.post { delegate.beginSession(sessionId) }
     }
 
     @JavascriptInterface
     fun parse(requestId: String, paragraphsJson: String) {
-        webView.post { requests(webView).parse(requestId, paragraphsJson) }
+        webView.post { delegate.parse(requestId, paragraphsJson) }
     }
 
     @JavascriptInterface
     fun cancel(requestId: String) {
-        webView.post { requests(webView).cancel(requestId) }
+        webView.post { delegate.cancel(requestId) }
     }
+
+    @JavascriptInterface
+    fun styles(): String = delegate.styles()
 }
 
 internal fun WebView.installJitenReaderBridge(requests: (WebView) -> JitenReaderRequests) {
@@ -73,6 +80,8 @@ internal fun jitenReaderRequests(
         )
 
     override fun cancel(requestId: String) = viewModel.cancel(requestId)
+
+    override fun styles(): String = viewModel.currentStyleCss()
 }
 
 internal fun WebView.applyJitenReaderTokens(requestId: String, tokensJson: String) {
@@ -102,6 +111,15 @@ internal fun jitenReaderStartInvocation(): String =
 internal fun WebView.updateJitenReaderStates(key: JitenWordKey, states: List<String>) {
     evaluateJavascript(jitenReaderStatesInvocation(key, states), null)
 }
+
+/** Repaints existing marked words when the user changes the state palette. */
+internal fun WebView.updateJitenReaderStyles(css: String) {
+    evaluateJavascript(jitenReaderStylesInvocation(css), null)
+}
+
+internal fun jitenReaderStylesInvocation(css: String): String =
+    "if (window.hoshiReaderJitenHighlight) { window.hoshiReaderJitenHighlight.setStyles(" +
+        "${Json.encodeToString(css)}); }"
 
 /** The state names as the popup receives them. */
 internal fun jitenStatesJson(states: List<String>): String = Json.encodeToString(states)

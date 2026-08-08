@@ -7,14 +7,28 @@
   var WordIdAttribute = 'data-jiten-word-id';
   var ReadingIndexAttribute = 'data-jiten-reading-index';
 
-  var styleSheet = __HOSHI_JITEN_CSS_LITERAL__;
+  var baseStyleSheet = __HOSHI_JITEN_CSS_LITERAL__;
+  var stateStyleSheet = '';
+
+  function combinedStyleSheet() {
+    return baseStyleSheet + (stateStyleSheet ? '\n' + stateStyleSheet : '');
+  }
 
   function ensureStyles() {
     if (document.getElementById(StyleElementId)) return;
     var style = document.createElement('style');
     style.id = StyleElementId;
-    style.textContent = styleSheet;
+    style.textContent = combinedStyleSheet();
     (document.head || document.documentElement).appendChild(style);
+  }
+
+  /** Replaces only state rules; existing marked words repaint immediately. */
+  function setStyles(css) {
+    stateStyleSheet = String(css || '');
+    ensureStyles();
+    var style = document.getElementById(StyleElementId);
+    if (style) style.textContent = combinedStyleSheet();
+    return stateStyleSheet.length;
   }
 
   function rubyAncestor(node, root) {
@@ -199,6 +213,7 @@
     applyTokens: applyTokens,
     clearTokens: clearTokens,
     updateStates: updateStates,
-    ensureStyles: ensureStyles
+    ensureStyles: ensureStyles,
+    setStyles: setStyles
   };
 })(window);

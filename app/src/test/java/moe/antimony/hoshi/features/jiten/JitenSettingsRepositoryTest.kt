@@ -20,18 +20,33 @@ class JitenSettingsRepositoryTest {
     @Test
     fun everyActionIsVisibleByDefault() = runBlocking {
         repository().use { handle ->
-            assertEquals(JitenReaderAction.entries.toSet(), handle.repository.settings.first().visibleActions)
+            val settings = handle.repository.settings.first()
+            assertEquals(JitenReaderAction.entries.toSet(), settings.visibleActions)
+            assertEquals(DefaultJitenStateStyles, settings.stateStyles)
         }
     }
 
     @Test
-    fun hiddenActionsArePersisted() = runBlocking {
+    fun hiddenActionsAndStateStylesArePersisted() = runBlocking {
         repository().use { handle ->
             val visible = setOf(JitenReaderAction.Again, JitenReaderAction.Good)
+            val customDue = JitenStateStyle(
+                textEnabled = false,
+                backgroundEnabled = true,
+                textColor = 0xFF123456,
+                backgroundColor = 0x80112233,
+            )
 
-            handle.repository.update { settings -> settings.copy(visibleActions = visible) }
+            handle.repository.update { settings ->
+                settings.copy(
+                    visibleActions = visible,
+                    stateStyles = settings.stateStyles + (JitenCardState.Due to customDue),
+                )
+            }
 
-            assertEquals(visible, handle.repository.settings.first().visibleActions)
+            val saved = handle.repository.settings.first()
+            assertEquals(visible, saved.visibleActions)
+            assertEquals(customDue, saved.stateStyles[JitenCardState.Due])
         }
     }
 

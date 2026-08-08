@@ -79,6 +79,13 @@ internal data class JitenPopupCard(
     val states: List<String>,
     val meanings: List<JitenPopupMeaning>,
     val actions: List<String>,
+    val styles: Map<String, JitenPopupStateStyle>,
+)
+
+@Serializable
+internal data class JitenPopupStateStyle(
+    val textColor: String? = null,
+    val backgroundColor: String? = null,
 )
 
 @Serializable
@@ -87,7 +94,7 @@ internal data class JitenPopupMeaning(
     val partsOfSpeech: List<String>,
 )
 
-internal fun JitenCard.toPopupCard(visibleActions: Set<JitenReaderAction>): JitenPopupCard =
+internal fun JitenCard.toPopupCard(settings: JitenSettings): JitenPopupCard =
     JitenPopupCard(
         wordId = key.wordId,
         readingIndex = key.readingIndex,
@@ -99,8 +106,20 @@ internal fun JitenCard.toPopupCard(visibleActions: Set<JitenReaderAction>): Jite
             JitenPopupMeaning(glosses = meaning.glosses, partsOfSpeech = meaning.partsOfSpeech)
         },
         actions = JitenReaderAction.entries
-            .filter(visibleActions::contains)
+            .filter(settings.visibleActions::contains)
             .map(JitenReaderAction::wireName),
+        styles = JitenCardState.entries.mapNotNull { state ->
+            val style = settings.styleFor(state)
+            if (!style.textEnabled && !style.backgroundEnabled) return@mapNotNull null
+            state.cssClass to JitenPopupStateStyle(
+                textColor = style.textColor
+                    .takeIf { style.textEnabled }
+                    ?.toJitenCssColor(includeAlpha = true),
+                backgroundColor = style.backgroundColor
+                    .takeIf { style.backgroundEnabled }
+                    ?.toJitenCssColor(includeAlpha = true),
+            )
+        }.toMap(),
     )
 
 /**

@@ -61,6 +61,16 @@ internal class JitenSettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateStateStyle(state: JitenCardState, transform: (JitenStateStyle) -> JitenStateStyle) {
+        viewModelScope.launch {
+            settingsRepository.update { settings ->
+                settings.copy(
+                    stateStyles = settings.stateStyles + (state to transform(settings.styleFor(state))),
+                )
+            }
+        }
+    }
+
     fun updateApiKey(apiKey: String) {
         val trimmed = apiKey.trim()
         viewModelScope.launch {

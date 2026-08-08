@@ -49,6 +49,18 @@
     return api && typeof api.parse === 'function' ? api : null;
   }
 
+  function refreshStyles() {
+    var api = bridge();
+    var highlight = global.hoshiReaderJitenHighlight;
+    if (!api || !highlight || typeof highlight.setStyles !== 'function') return 0;
+    if (typeof api.styles !== 'function') return 0;
+    try {
+      return highlight.setStyles(api.styles());
+    } catch (error) {
+      return 0;
+    }
+  }
+
   /**
    * Records the cues Kotlin passes in, so [scheduleReindex] can rebuild them.
    * Sasayaki holds text nodes and offsets that colouring invalidates, and only
@@ -333,6 +345,7 @@
   function start() {
     var api = bridge();
     if (!api) return 0;
+    refreshStyles();
     if (typeof api.beginSession === 'function') api.beginSession(state.session);
     return observeUnits();
   }
@@ -359,6 +372,7 @@
     request.units.forEach(function(unit) { state.nodeRequests.delete(unit.node); });
     var highlight = global.hoshiReaderJitenHighlight;
     if (!highlight) return 0;
+    refreshStyles();
     var tokens;
     try {
       tokens = JSON.parse(tokensJson || '[]');

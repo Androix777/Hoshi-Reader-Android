@@ -1,11 +1,13 @@
 package moe.antimony.hoshi.features.jiten
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextObfuscationMode
@@ -26,11 +28,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import moe.antimony.hoshi.R
+import moe.antimony.hoshi.features.reader.ReaderColorPickerDialog
 import moe.antimony.hoshi.features.settings.SettingsDetailScaffold
 import moe.antimony.hoshi.ui.asString
 import moe.antimony.hoshi.ui.hoshiOutlinedTextFieldColors
@@ -46,6 +50,7 @@ fun JitenSettingsView(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var editingApiKey by remember { mutableStateOf(false) }
     var apiKeyInput by remember { mutableStateOf("") }
+    var colorDialogTarget by remember { mutableStateOf<JitenColorTarget?>(null) }
 
     if (editingApiKey) {
         val apiKeyState = rememberSyncedTextFieldState(
@@ -90,6 +95,26 @@ fun JitenSettingsView(
         )
     }
 
+    colorDialogTarget?.let { target ->
+        val style = uiState.settings.styleFor(target.state)
+        ReaderColorPickerDialog(
+            title = stringResource(
+                R.string.jiten_color_dialog_title,
+                stringResource(target.state.labelRes),
+                stringResource(target.channel.labelRes),
+            ),
+            initialColor = target.channel.color(style),
+            defaultColor = target.channel.color(checkNotNull(DefaultJitenStateStyles[target.state])),
+            onColorChange = { color ->
+                viewModel.updateStateStyle(target.state) { current ->
+                    target.channel.updated(current, color)
+                }
+                colorDialogTarget = null
+            },
+            onDismiss = { colorDialogTarget = null },
+        )
+    }
+
     SettingsDetailScaffold(
         title = stringResource(R.string.settings_jiten),
         onClose = onClose,
@@ -117,6 +142,51 @@ fun JitenSettingsView(
                 }
             }
             if (uiState.settings.enabled) {
+                item {
+                    JitenSettingsCard {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                            headlineContent = { Text(stringResource(R.string.jiten_word_colors)) },
+                            supportingContent = { Text(stringResource(R.string.jiten_word_colors_description)) },
+                        )
+                        JitenCardState.entries.forEach { state ->
+                            val style = uiState.settings.styleFor(state)
+                            HorizontalDivider()
+                            ListItem(
+                                colors = ListItemDefaults.colors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                                headlineContent = { Text(stringResource(state.labelRes)) },
+                            )
+                            JitenStateColorRow(
+                                label = stringResource(R.string.reader_appearance_text_color),
+                                color = style.textColor,
+                                enabled = style.textEnabled,
+                                onEnabledChange = { enabled ->
+                                    viewModel.updateStateStyle(state) {
+                                        JitenColorChannel.Text.updatedEnabled(it, enabled)
+                                    }
+                                },
+                                onColorClick = {
+                                    colorDialogTarget = JitenColorTarget(state, JitenColorChannel.Text)
+                                },
+                            )
+                            JitenStateColorRow(
+                                label = stringResource(R.string.reader_appearance_background_color),
+                                color = style.backgroundColor,
+                                enabled = style.backgroundEnabled,
+                                onEnabledChange = { enabled ->
+                                    viewModel.updateStateStyle(state) {
+                                        JitenColorChannel.Background.updatedEnabled(it, enabled)
+                                    }
+                                },
+                                onColorClick = {
+                                    colorDialogTarget = JitenColorTarget(state, JitenColorChannel.Background)
+                                },
+                            )
+                        }
+                    }
+                }
                 item {
                     JitenSettingsCard {
                         ListItem(
@@ -217,6 +287,82 @@ private val JitenReaderAction.labelRes: Int
         JitenReaderAction.Blacklist -> R.string.jiten_action_blacklist
         JitenReaderAction.Forget -> R.string.jiten_action_forget
     }
+
+private val JitenCardState.labelRes: Int
+    get() = when (this) {
+        JitenCardState.New -> R.string.jiten_state_new
+        JitenCardState.Young -> R.string.jiten_state_young
+        JitenCardState.Mature -> R.string.jiten_state_mature
+        JitenCardState.Blacklisted -> R.string.jiten_state_blacklisted
+        JitenCardState.Due -> R.string.jiten_state_due
+        JitenCardState.Mastered -> R.string.jiten_state_mastered
+        JitenCardState.Redundant -> R.string.jiten_state_redundant
+        JitenCardState.Suspended -> R.string.jiten_state_suspended
+    }
+
+private data class JitenColorTarget(
+    val state: JitenCardState,
+    val channel: JitenColorChannel,
+)
+
+private enum class JitenColorChannel(val labelRes: Int) {
+    Text(R.string.reader_appearance_text_color),
+    Background(R.string.reader_appearance_background_color),
+    ;
+
+    fun color(style: JitenStateStyle): Long = when (this) {
+        Text -> style.textColor
+        Background -> style.backgroundColor
+    }
+
+    fun updated(style: JitenStateStyle, color: Long): JitenStateStyle = when (this) {
+        Text -> style.copy(textColor = color)
+        Background -> style.copy(backgroundColor = color)
+    }
+
+    fun updatedEnabled(style: JitenStateStyle, enabled: Boolean): JitenStateStyle = when (this) {
+        Text -> style.copy(textEnabled = enabled)
+        Background -> style.copy(backgroundEnabled = enabled)
+    }
+}
+
+@Composable
+private fun JitenStateColorRow(
+    label: String,
+    color: Long,
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    onColorClick: () -> Unit,
+) {
+    ListItem(
+        modifier = Modifier.clickable(enabled = enabled, onClick = onColorClick),
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        headlineContent = { Text(label) },
+        supportingContent = {
+            Text(
+                stringResource(
+                    if (enabled) R.string.jiten_color_custom else R.string.jiten_color_reader_default,
+                ),
+            )
+        },
+        leadingContent = if (enabled) {
+            {
+                Surface(
+                    modifier = Modifier.size(28.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(color),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    tonalElevation = 0.dp,
+                ) {}
+            }
+        } else {
+            null
+        },
+        trailingContent = {
+            Switch(checked = enabled, onCheckedChange = onEnabledChange)
+        },
+    )
+}
 
 @Composable
 private fun JitenSettingsCard(content: @Composable () -> Unit) {

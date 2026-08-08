@@ -180,9 +180,4 @@
     color: #e8a735;
 }
 
-/* Colours match `reader-jiten.css`, so a state reads the same in both places. */
-.hoshi-jiten-state.jiten-new { color: #4b8dff; }
-.hoshi-jiten-state.jiten-young { color: #4ac34a; }
-.hoshi-jiten-state.jiten-due { color: #e8a735; }
-.hoshi-jiten-state.jiten-suspended,
-.hoshi-jiten-state.jiten-blacklisted { color: #777777; }
+/* State colours are supplied with the card from the same settings as Reader. */

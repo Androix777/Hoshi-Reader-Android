@@ -113,7 +113,13 @@
       head.appendChild(element('span', 'hoshi-jiten-reading', card.reading));
     }
     (card.states || []).forEach(function(state) {
-      head.appendChild(element('span', 'hoshi-jiten-state jiten-' + state, StateLabels[state] || state));
+      var chip = element('span', 'hoshi-jiten-state jiten-' + state, StateLabels[state] || state);
+      var style = card.styles && card.styles[state];
+      if (style) {
+        chip.style.color = style.textColor || '';
+        chip.style.backgroundColor = style.backgroundColor || '';
+      }
+      head.appendChild(chip);
     });
     if (card.frequencyRank) {
       head.appendChild(element('span', 'hoshi-jiten-frequency', '#' + card.frequencyRank));

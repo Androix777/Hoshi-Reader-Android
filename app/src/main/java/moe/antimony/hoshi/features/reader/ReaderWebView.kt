@@ -68,6 +68,7 @@ import moe.antimony.hoshi.features.jiten.JitenReaderViewModel
 import moe.antimony.hoshi.features.jiten.jitenReaderRequests
 import moe.antimony.hoshi.features.jiten.jitenStatesJson
 import moe.antimony.hoshi.features.jiten.updateJitenReaderStates
+import moe.antimony.hoshi.features.jiten.updateJitenReaderStyles
 import moe.antimony.hoshi.features.dictionary.DictionaryImageRequestHandler
 import moe.antimony.hoshi.features.dictionary.DictionarySettings
 import moe.antimony.hoshi.features.dictionary.LookupPopupAssets
@@ -227,7 +228,11 @@ fun ReaderWebView(
     var fullscreenImage by remember { mutableStateOf<ReaderFullscreenImage?>(null) }
     val ankiViewModel: AnkiViewModel = hiltViewModel()
     val jitenReaderViewModel: JitenReaderViewModel = hiltViewModel()
+    val jitenStyleCss by jitenReaderViewModel.styleCss.collectAsStateWithLifecycle()
     val ankiUiState by ankiViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(webView, jitenStyleCss) {
+        webView?.updateJitenReaderStyles(jitenStyleCss)
+    }
     val popupAssets = remember(context) { LookupPopupAssets.load(context) }
     val readerPopupBridgeHolder = remember { ReaderLookupPopupBridgeCallbackHolder() }
     val popupDarkMode = effectiveSettings.usesDarkInterface(systemDarkTheme)

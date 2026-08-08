@@ -305,7 +305,12 @@ test('jiten highlight installs its stylesheet once', () => {
 
     const styles = document.head.childNodes.filter((child) => child.tagName === 'STYLE');
     assert.equal(styles.length, 1);
-    assert.match(styles[0].textContent, /\.jiten-word\.jiten-new/);
+    assert.match(styles[0].textContent, /\.jiten-word/);
+
+    highlight.setStyles('.jiten-word.jiten-new { color: #123456 !important; }');
+
+    assert.equal(document.head.childNodes.filter((child) => child.tagName === 'STYLE').length, 1);
+    assert.match(styles[0].textContent, /#123456/);
 });
 
 test('jiten highlight ignores tokens no fragment covers', () => {

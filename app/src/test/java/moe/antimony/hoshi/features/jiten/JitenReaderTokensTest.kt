@@ -1,6 +1,7 @@
 package moe.antimony.hoshi.features.jiten
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class JitenReaderTokensTest {
@@ -19,9 +20,18 @@ class JitenReaderTokensTest {
         )
 
         val popup = card.toPopupCard(
-            setOf(JitenReaderAction.Blacklist, JitenReaderAction.Again, JitenReaderAction.Easy),
+            JitenSettings(
+                visibleActions = setOf(
+                    JitenReaderAction.Blacklist,
+                    JitenReaderAction.Again,
+                    JitenReaderAction.Easy,
+                ),
+            ),
         )
 
         assertEquals(listOf("again", "easy", "blacklist"), popup.actions)
+        assertEquals("#4b8dff", popup.styles.getValue("new").textColor)
+        assertNull(popup.styles.getValue("new").backgroundColor)
+        assertEquals(false, "mature" in popup.styles)
     }
 }

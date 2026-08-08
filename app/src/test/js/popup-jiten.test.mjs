@@ -284,6 +284,24 @@ test('every state the card carries is shown, not just the first', () => {
     );
 });
 
+test('state chips use the same configurable colours as reader words', () => {
+    const { jiten } = load();
+    const card = jiten.renderCard({
+        spelling: '本',
+        reading: 'ほん',
+        states: ['new', 'mature'],
+        styles: {
+            new: { textColor: '#123456', backgroundColor: '#abcdef40' },
+        },
+        meanings: [],
+    });
+
+    const chips = byClass(card, 'hoshi-jiten-state');
+    assert.equal(chips[0].style.color, '#123456');
+    assert.equal(chips[0].style.backgroundColor, '#abcdef40');
+    assert.equal(chips[1].style.color, undefined);
+});
+
 test('meanings carry their parts of speech', () => {
     const { jiten } = load();
 

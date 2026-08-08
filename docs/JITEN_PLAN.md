@@ -58,8 +58,9 @@ Conflating these silently misplaces every highlight.
 features/jiten/
   JitenApiClient.kt           HTTP, auth, retry            (done)
   JitenModels.kt              tokens, cards, knownState → JitenCardState  (done)
-  JitenSettingsRepository.kt  DataStore: key, enabled      (done)
+  JitenSettingsRepository.kt  DataStore: key, enabled, actions, colours (done)
   JitenSettingsView[Model].kt settings entry               (done)
+  JitenStateStyles.kt         per-state text/background CSS             (done)
   JitenRepository.kt          chunking, skipping, alignment, card cache (done)
   JitenReaderTokens.kt        wire shapes: highlight tokens, popup card (done)
   JitenReaderViewModel.kt     one parse at a time per reader           (done)
@@ -104,7 +105,7 @@ a rejected-key latch that an explicitly passed key bypasses. Endpoints:
 Decisions taken while implementing:
 
 - No user-editable endpoint. Jiten is one hosted service; `JitenApiClient.Endpoint`
-  is a constant, and settings hold only `enabled` and `apiKey`. It must keep the
+  is a constant, and connection settings hold only `enabled` and `apiKey`. It must keep the
   `/api` suffix: the base URL comes from the extension's configuration default,
   not from the suffix-less dead default parameter on `requestByUrl`.
 - Server failures carry their HTTP status into the settings status line, so a
@@ -157,9 +158,16 @@ Constraints worth keeping:
   to the later one.
 - State CSS uses `!important` narrowly: the reader forces
   `color: var(--hoshi-text-color) !important` on `html, body`, and EPUB
-  stylesheets set colours at arbitrary specificity. Mature and Mastered get no
-  rule, so the override only lands where a state has a colour. The palette is
-  the extension's Toy Box preset, the one that needs no underline or opacity.
+  stylesheets set colours at arbitrary specificity. Each state's text and
+  background channels can independently inherit the current Reader/EPUB value
+  or override it; backgrounds remain alpha-capable. The extension's Toy Box
+  colours remain the defaults. Mature and Mastered inherit both channels by
+  default, while Redundant inherits text and overrides only the background.
+  Reader and popup receive the same persisted palette.
+- State rules live in the injected stylesheet, separate from word wrapping.
+  Changing settings replaces those rules and repaints existing words without
+  splitting text nodes again, so offsets, highlights and Sasayaki references stay
+  valid.
 - Paragraphs are collected once to post and again to apply, and coloured only
   if the text still matches. Progress restore, Sasayaki and highlights all
   rearrange text nodes mid-flight without changing text.
