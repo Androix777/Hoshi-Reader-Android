@@ -10,7 +10,8 @@ val rustProjectDir = file("src/main/rust/hoshiepub")
 val uniffiOutDir = layout.buildDirectory.dir("generated/source/uniffi/main/kotlin").get().asFile
 val rustDebugJniLibsDir = layout.buildDirectory.dir("jniLibs/debug").get().asFile
 val rustReleaseJniLibsDir = layout.buildDirectory.dir("jniLibs/release").get().asFile
-val cargo = System.getenv("HOME") + "/.cargo/bin/cargo"
+val isWindowsHost = System.getProperty("os.name").lowercase().contains("win")
+val cargo = if (isWindowsHost) "cargo" else System.getenv("HOME") + "/.cargo/bin/cargo"
 val androidNdkHome = System.getenv("ANDROID_NDK_HOME") ?: "/opt/homebrew/share/android-ndk"
 val releaseKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_FILE").orNull
 val releaseKeystorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
@@ -43,6 +44,9 @@ val hostLibExtension = when {
     System.getProperty("os.name").lowercase().contains("win") -> "dll"
     else -> "so"
 }
+
+// Windows cdylib output carries no `lib` prefix.
+val hostLibName = if (isWindowsHost) "hoshiepub.$hostLibExtension" else "libhoshiepub.$hostLibExtension"
 
 android {
     namespace = "moe.antimony.hoshi"
@@ -184,7 +188,7 @@ val buildRustHost by tasks.registering(Exec::class) {
         rustProjectDir.resolve("uniffi.toml"),
     )
     inputs.dir(rustProjectDir.resolve("src"))
-    outputs.file(rustProjectDir.resolve("target/debug/libhoshiepub.$hostLibExtension"))
+    outputs.file(rustProjectDir.resolve("target/debug/$hostLibName"))
 
     commandLine(cargo, "build", "--lib")
 }
@@ -193,7 +197,7 @@ val generateUniffiKotlin by tasks.registering(Exec::class) {
     dependsOn(buildRustHost)
     workingDir = rustProjectDir
 
-    val hostLibPath = rustProjectDir.resolve("target/debug/libhoshiepub.$hostLibExtension")
+    val hostLibPath = rustProjectDir.resolve("target/debug/$hostLibName")
 
     inputs.file(hostLibPath)
     inputs.file(rustProjectDir.resolve("uniffi.toml"))

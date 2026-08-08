@@ -13,6 +13,8 @@ Hoshi Reader Android is a lightweight Japanese EPUB reader app for Android, buil
 
 This project is a native Android recreation of [Hoshi Reader](https://github.com/Manhhao/Hoshi-Reader).
 
+This repository is a fork of [Hoshi Reader Android](https://github.com/HuangAntimony/Hoshi-Reader-Android) that adds [Jiten.moe](https://jiten.moe) integration.
+
 <table>
   <tr>
     <td><img src="docs/images/readme/bookshelf.jpg" alt="Bookshelf" width="100%"></td>
