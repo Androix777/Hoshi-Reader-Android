@@ -1,8 +1,9 @@
 # Jiten Integration Plan
 
-Jiten reading mode in the Reader: words coloured by card state, and a switch in
-the Reader chrome that makes tapping a word open a Jiten popup with SRS actions
-instead of the dictionary popup.
+Jiten reading mode in the Reader: words coloured by card state, and a
+dictionary popup that toggles to a Jiten view. A tap collects both the
+dictionary word and the Jiten token under it when possible, so switching views
+needs no second tap.
 
 Ported from the JitenReader browser extension: `shared/jiten/` (API),
 `apps/text-highlighter/` and `apps/paragraph-reader/` (token→DOM mapping),
@@ -71,7 +72,11 @@ hoshi-web/reader/
   reader-jiten-highlight.js   apply/remove word spans                  (done)
   reader-jiten.css            state classes                            (done)
   reader-jiten.js             controller: observe, request, apply      (done)
-  reader-jiten-tap.js         hit-test .jiten-word before normal selection
+  reader-jiten-tap.js         the Jiten token a tap resolves to, for the popup
+
+hoshi-web/popup/
+  popup-jiten.js              Jiten view: card and SRS actions
+  popup-jiten.css             Jiten view layout
 ```
 
 Upstream files touched, all of it delegation: three lines in
@@ -212,22 +217,16 @@ offline stays uncoloured until read again online. Card states outlive a session,
 so a store keyed by word and reading would colour known words with no network —
 the real offline answer, and bigger than this slice.
 
-**3. Mode switch.** The switch controls tap behavior only: on, a tap opens the
-Jiten popup; off, the dictionary popup. Colouring stays applied either way.
-Later: long-press the switch to drop the colouring too.
+**3. Popup mode toggle.** The dictionary popup toggles between its dictionary
+view and a Jiten view. The toggle only changes what is shown; colouring stays
+applied either way. Later: long-press the toggle to drop the colouring too.
 
-**4. Popup and SRS actions.** Hit-test `.jiten-word`, fall through to normal
-selection on a miss. New bridge messages following the existing
-`mineEntry`/`duplicateCheck` pattern. Optimistic class update on the word,
-reconciled after the API responds.
-
-The card body needs no `popup.js` change: shape it as Yomitan-style structured
-content and `renderStructuredContent` draws it. The actions — grade
-(again/hard/good/easy), never forget, blacklist, add to study deck — do require
-editing `popup.js`, since `createButtonSlot` only knows `audio` and `mine` and
-resolves icons from a fixed path. Keep that edit to one delegating call into a
-fork-owned `popup-jiten.js`; `popup.js` is upstream's file and the rest of this
-feature deliberately avoids it.
+**4. Tap and SRS actions.** A tap collects both the dictionary word and the
+Jiten token under it when the tap lands on a coloured span, so toggling to the
+Jiten view needs no second tap. The Jiten view shows the card and the SRS
+actions: grade (again/hard/good/easy), never forget, blacklist, forget. An
+action updates the word's colour immediately and reconciles if the server
+disagrees.
 
 ## Risks
 
@@ -237,4 +236,5 @@ feature deliberately avoids it.
 - **Offline-first app, online feature.** Chapters are long; chunk, cancel on
   chapter change, never surface raw exceptions into reader content.
 - **Two dictionaries.** Jiten glosses are thinner than a good local dictionary,
-  which is why the switch keeps both popups reachable.
+  which is why the popup keeps the dictionary view one toggle away rather than
+  replacing it.
