@@ -164,6 +164,7 @@ private const val CompletedProgressThreshold = 0.999
 enum class SettingsDestination {
     Dictionaries,
     Anki,
+    Jiten,
     Profiles,
     Appearance,
     Behavior,
@@ -205,6 +206,7 @@ fun settingsGroups(): List<List<SettingsRowModel>> = listOf(
         SettingsRowModel(R.string.settings_profiles, SettingsDestination.Profiles),
         SettingsRowModel(R.string.settings_dictionaries, SettingsDestination.Dictionaries),
         SettingsRowModel(R.string.settings_anki, SettingsDestination.Anki),
+        SettingsRowModel(R.string.settings_jiten, SettingsDestination.Jiten),
         SettingsRowModel(R.string.settings_appearance, SettingsDestination.Appearance),
         SettingsRowModel(R.string.settings_behavior, SettingsDestination.Behavior),
         SettingsRowModel(R.string.settings_advanced, SettingsDestination.Advanced),

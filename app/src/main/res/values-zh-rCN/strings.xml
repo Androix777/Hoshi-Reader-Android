@@ -721,4 +721,20 @@
     <string name="book_cover_scale_fill_summary">保持原始比例填满屏幕，并裁切超出的部分。</string>
     <string name="book_cover_scale_stretch">拉伸</string>
     <string name="book_cover_scale_stretch_summary">不保持封面原始比例，直接填满屏幕。</string>
+    <string name="settings_jiten">Jiten</string>
+    <string name="jiten_enable">使用 Jiten</string>
+    <string name="jiten_enable_description">在阅读器中按 Jiten 卡片状态为词语着色。</string>
+    <string name="jiten_api_key">API 密钥</string>
+    <string name="jiten_api_key_help">在 jiten.moe 账户设置中创建阅读器 API 密钥。</string>
+    <string name="jiten_api_key_configured">已保存密钥</string>
+    <string name="jiten_api_key_missing">请先填写 Jiten API 密钥。</string>
+    <string name="jiten_connection">服务器状态</string>
+    <string name="jiten_connection_testing">连接中…</string>
+    <string name="jiten_connection_untested">尚未检查</string>
+    <string name="jiten_connection_connected" comment="Jiten connection state, intentionally matching AnkiConnect connection state.">已连接</string>
+    <string name="jiten_connection_failed" comment="Jiten connection state, intentionally matching AnkiConnect connection state.">未连接</string>
+    <string name="jiten_connection_unauthorized">Jiten 拒绝了该 API 密钥。请检查后重试。</string>
+    <string name="jiten_connection_server_error">Jiten 返回了错误。请稍后重试。</string>
+    <string name="jiten_connection_server_error_code">Jiten 返回了错误 (%1$d)。请稍后重试。</string>
+    <string name="jiten_connection_unreachable">无法连接 jiten.moe。请检查网络连接。</string>
 </resources>

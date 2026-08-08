@@ -23,6 +23,8 @@ import moe.antimony.hoshi.features.bookshelf.BookshelfSettingsRepository
 import moe.antimony.hoshi.features.bookshelf.bookshelfSettingsRepository
 import moe.antimony.hoshi.features.dictionary.DictionarySettingsRepository
 import moe.antimony.hoshi.features.dictionary.dictionarySettingsRepository
+import moe.antimony.hoshi.features.jiten.JitenSettingsRepository
+import moe.antimony.hoshi.features.jiten.jitenSettingsRepository
 import moe.antimony.hoshi.features.reader.ReaderSettingsRepository
 import moe.antimony.hoshi.features.reader.readerSettingsRepository
 import moe.antimony.hoshi.features.sasayaki.SasayakiSettingsRepository
@@ -123,6 +125,11 @@ internal object HoshiAppModule {
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
     ): AnkiSettingsRepository =
         context.ankiSettingsRepository(profileRepository, ioDispatcher)
+
+    @Provides
+    @Singleton
+    fun provideJitenSettingsRepository(@ApplicationContext context: Context): JitenSettingsRepository =
+        context.jitenSettingsRepository()
 
     @Provides
     @Singleton

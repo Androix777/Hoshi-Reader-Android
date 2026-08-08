@@ -15,6 +15,10 @@ import moe.antimony.hoshi.features.dictionary.AndroidDictionarySearchRepository
 import moe.antimony.hoshi.features.dictionary.AndroidDictionaryViewModelRepository
 import moe.antimony.hoshi.features.dictionary.DictionarySearchRepository
 import moe.antimony.hoshi.features.dictionary.DictionaryViewModelRepository
+import moe.antimony.hoshi.features.jiten.ExponentialJitenRetryDelay
+import moe.antimony.hoshi.features.jiten.HttpJitenTransport
+import moe.antimony.hoshi.features.jiten.JitenHttpTransport
+import moe.antimony.hoshi.features.jiten.JitenRetryDelay
 import moe.antimony.hoshi.features.statistics.AndroidStatisticsRepository
 import moe.antimony.hoshi.features.statistics.StatisticsDateProvider
 import moe.antimony.hoshi.features.statistics.StatisticsRepository
@@ -70,6 +74,13 @@ internal interface HoshiBindingsModule {
     @Binds
     @Singleton
     fun bindAnkiBackend(backend: AnkiDroidBackendAdapter): AnkiBackend
+
+    @Binds
+    @Singleton
+    fun bindJitenHttpTransport(transport: HttpJitenTransport): JitenHttpTransport
+
+    @Binds
+    fun bindJitenRetryDelay(delay: ExponentialJitenRetryDelay): JitenRetryDelay
 
     @Binds
     @Singleton

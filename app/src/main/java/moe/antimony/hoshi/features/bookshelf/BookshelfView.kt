@@ -61,6 +61,7 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.ReportProblem
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -2304,6 +2305,7 @@ private fun SettingsGlyph(destination: SettingsDestination, color: Color, modifi
     val icon = when (destination) {
         SettingsDestination.Dictionaries -> Icons.AutoMirrored.Rounded.MenuBook
         SettingsDestination.Anki -> Icons.Rounded.Inventory2
+        SettingsDestination.Jiten -> Icons.Rounded.Style
         SettingsDestination.Profiles -> Icons.Rounded.Person
         SettingsDestination.Appearance -> Icons.Rounded.Palette
         SettingsDestination.Behavior -> Icons.Rounded.Keyboard

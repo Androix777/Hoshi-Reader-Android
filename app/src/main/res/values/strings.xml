@@ -723,4 +723,20 @@
     <string name="book_cover_scale_fill_summary">Fill the screen while preserving proportions, cropping overflow.</string>
     <string name="book_cover_scale_stretch">Stretch</string>
     <string name="book_cover_scale_stretch_summary">Fill the screen without preserving the cover’s proportions.</string>
+    <string name="settings_jiten">Jiten</string>
+    <string name="jiten_enable">Use Jiten</string>
+    <string name="jiten_enable_description">Colour words in the reader by their Jiten card state.</string>
+    <string name="jiten_api_key">API key</string>
+    <string name="jiten_api_key_help">Create a reader API key in your jiten.moe account settings.</string>
+    <string name="jiten_api_key_configured">Key saved</string>
+    <string name="jiten_api_key_missing">Enter your Jiten API key first.</string>
+    <string name="jiten_connection">Server status</string>
+    <string name="jiten_connection_testing">Connecting…</string>
+    <string name="jiten_connection_untested">Not checked</string>
+    <string name="jiten_connection_connected" comment="Jiten connection state, intentionally matching AnkiConnect connection state.">Connected</string>
+    <string name="jiten_connection_failed" comment="Jiten connection state, intentionally matching AnkiConnect connection state.">Not connected</string>
+    <string name="jiten_connection_unauthorized">Jiten rejected the API key. Check it and try again.</string>
+    <string name="jiten_connection_server_error">Jiten reported an error. Try again later.</string>
+    <string name="jiten_connection_server_error_code">Jiten reported an error (%1$d). Try again later.</string>
+    <string name="jiten_connection_unreachable">Could not reach jiten.moe. Check your connection.</string>
 </resources>
