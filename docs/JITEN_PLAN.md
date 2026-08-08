@@ -252,6 +252,11 @@ Why a gesture rather than a toggle, a tab or a second popup:
 
 Constraints:
 
+- Card actions sit directly below the word/state header, before meanings. They
+  use a compact pill treatment, with grade colours carrying the visual weight;
+  each of the seven actions can be hidden independently in Jiten settings. The
+  hidden set is persisted rather than the visible set, so actions added by a
+  future version remain visible by default.
 - The card is fetched when the popup opens, not when the gesture starts or
   commits: the block must be readable from the first pixel of the pull, and by
   then the tap is already hundreds of milliseconds old. It also keeps the

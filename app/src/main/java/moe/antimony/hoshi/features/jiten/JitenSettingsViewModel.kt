@@ -47,6 +47,20 @@ internal class JitenSettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateActionVisible(action: JitenReaderAction, visible: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.update { settings ->
+                settings.copy(
+                    visibleActions = if (visible) {
+                        settings.visibleActions + action
+                    } else {
+                        settings.visibleActions - action
+                    },
+                )
+            }
+        }
+    }
+
     fun updateApiKey(apiKey: String) {
         val trimmed = apiKey.trim()
         viewModelScope.launch {

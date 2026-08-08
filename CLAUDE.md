@@ -17,6 +17,9 @@ upstream features, not this fork's. Fork facts go in fork-owned docs.
 iOS counterpart, so that rule does not govern it; see `docs/JITEN_PLAN.md`.
 `applicationId` stays `moe.antimony.hoshi`.
 
+Never create commits. Leave all changes unstaged for the user to review and
+commit manually.
+
 ## Keeping Rebases Cheap
 
 Reader files are upstream's most-edited area, and they are exactly what this

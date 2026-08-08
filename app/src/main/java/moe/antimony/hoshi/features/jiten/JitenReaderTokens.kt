@@ -38,7 +38,7 @@ internal fun List<List<JitenToken>>.toReaderTokens(): List<List<JitenReaderToken
  * current state. That decision belongs here, next to the state, and not in a
  * page that would have to be told the answer first.
  */
-internal enum class JitenReaderAction(val wireName: String) {
+enum class JitenReaderAction(val wireName: String) {
     Again("again"),
     Hard("hard"),
     Good("good"),
@@ -78,6 +78,7 @@ internal data class JitenPopupCard(
     val frequencyRank: Int,
     val states: List<String>,
     val meanings: List<JitenPopupMeaning>,
+    val actions: List<String>,
 )
 
 @Serializable
@@ -86,7 +87,7 @@ internal data class JitenPopupMeaning(
     val partsOfSpeech: List<String>,
 )
 
-internal fun JitenCard.toPopupCard(): JitenPopupCard =
+internal fun JitenCard.toPopupCard(visibleActions: Set<JitenReaderAction>): JitenPopupCard =
     JitenPopupCard(
         wordId = key.wordId,
         readingIndex = key.readingIndex,
@@ -97,6 +98,9 @@ internal fun JitenCard.toPopupCard(): JitenPopupCard =
         meanings = meanings.map { meaning ->
             JitenPopupMeaning(glosses = meaning.glosses, partsOfSpeech = meaning.partsOfSpeech)
         },
+        actions = JitenReaderAction.entries
+            .filter(visibleActions::contains)
+            .map(JitenReaderAction::wireName),
     )
 
 /**

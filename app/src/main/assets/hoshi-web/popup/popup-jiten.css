@@ -125,17 +125,17 @@
 }
 
 .hoshi-jiten-actions {
-    margin-top: 14px;
+    margin: 6px 0 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
 }
 
 .hoshi-jiten-grades,
 .hoshi-jiten-decks {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 5px;
 }
 
 .hoshi-jiten-grades > .hoshi-jiten-action {
@@ -144,17 +144,22 @@
 
 .hoshi-jiten-action {
     font: inherit;
-    font-size: 14px;
-    /* Comfortably above the ~48px tap target on a page reached by dragging. */
-    min-height: 40px;
-    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    min-height: 30px;
+    padding: 0 9px;
     color: var(--text-color);
     background-color: var(--background-color-dark1);
     border: 1px solid var(--text-color-light4);
-    border-radius: 8px;
+    border-radius: 999px;
     -webkit-user-select: none;
     user-select: none;
 }
+
+.hoshi-jiten-action-again { color: #d85b5b; border-color: #d85b5b; }
+.hoshi-jiten-action-hard { color: #d78b32; border-color: #d78b32; }
+.hoshi-jiten-action-good { color: #3d9b55; border-color: #3d9b55; }
+.hoshi-jiten-action-easy { color: #4b8dff; border-color: #4b8dff; }
 
 .hoshi-jiten-action:disabled {
     opacity: 0.45;

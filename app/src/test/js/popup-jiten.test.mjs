@@ -459,6 +459,33 @@ test('the card offers the four grades and the three deck actions', () => {
     );
 });
 
+test('actions are placed above meanings', () => {
+    const { jiten } = load();
+    const card = jiten.renderCard(DueCard);
+
+    assert.deepEqual(
+        card.childNodes.map((node) => node.className),
+        ['hoshi-jiten-head', 'hoshi-jiten-actions', 'hoshi-jiten-meanings'],
+    );
+});
+
+test('the card renders only actions enabled in settings', () => {
+    const harness = load();
+    harness.jiten.showCard({ ...DueCard, actions: ['again', 'good', 'blacklist'] });
+
+    assert.deepEqual(
+        harness.buttons().map((node) => node.textContent),
+        ['Again', 'Good', 'Blacklist'],
+    );
+});
+
+test('hiding every action removes the action panel', () => {
+    const { jiten } = load();
+    const card = jiten.renderCard({ ...DueCard, actions: [] });
+
+    assert.equal(byClass(card, 'hoshi-jiten-actions').length, 0);
+});
+
 test('a membership button says what it will do, not what the card is', () => {
     const harness = load();
     harness.jiten.showCard({ ...DueCard, states: ['mastered', 'blacklisted'] });

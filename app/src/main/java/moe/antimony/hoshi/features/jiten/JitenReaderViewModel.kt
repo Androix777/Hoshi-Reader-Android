@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -18,9 +20,15 @@ import kotlinx.serialization.json.Json
 @HiltViewModel
 internal class JitenReaderViewModel @Inject constructor(
     private val repository: JitenRepository,
+    settingsRepository: JitenSettingsRepository,
 ) : ViewModel() {
     private val jobs = mutableMapOf<String, Job>()
     private var session: String? = null
+    private val settings = settingsRepository.settings.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = JitenSettings(),
+    )
 
     /**
      * Retires the previous page load's work. A replaced page never says
@@ -76,7 +84,9 @@ internal class JitenReaderViewModel @Inject constructor(
      * wire shape stays inside the feature.
      */
     fun cardJson(key: JitenWordKey): String? =
-        repository.card(key)?.let { card -> json.encodeToString(card.toPopupCard()) }
+        repository.card(key)?.let { card ->
+            json.encodeToString(card.toPopupCard(settings.value.visibleActions))
+        }
 
     /**
      * Carries out a card action, answering with the resulting state names or

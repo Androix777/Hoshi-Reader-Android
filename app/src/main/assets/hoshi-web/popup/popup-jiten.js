@@ -120,6 +120,9 @@
     }
     root.appendChild(head);
 
+    var actions = renderActions(card, options, onAction);
+    if (actions) root.appendChild(actions);
+
     var meanings = (card.meanings || []).filter(function(meaning) {
       return meaning && (meaning.glosses || []).length;
     });
@@ -138,7 +141,6 @@
       root.appendChild(list);
     }
 
-    root.appendChild(renderActions(card, options, onAction));
     return root;
   }
 
@@ -154,7 +156,11 @@
   }
 
   function actionButton(label, name, view, onAction, className) {
-    var node = element('button', 'hoshi-jiten-action ' + (className || ''), label);
+    var node = element(
+      'button',
+      'hoshi-jiten-action hoshi-jiten-action-' + name + ' ' + (className || ''),
+      label
+    );
     node.type = 'button';
     node.disabled = !!view.busy;
     node.addEventListener('click', function() {
@@ -174,39 +180,52 @@
    * dropped, which would make the button silently do nothing.
    */
   function renderActions(card, view, onAction) {
+    var configured = Array.isArray(card.actions) ? card.actions : null;
+    function isVisible(name) {
+      return !configured || configured.indexOf(name) !== -1;
+    }
+
     var actions = element('div', 'hoshi-jiten-actions');
     var grades = element('div', 'hoshi-jiten-grades');
     Grades.forEach(function(grade) {
-      grades.appendChild(actionButton(grade.label, grade.name, view, onAction, 'hoshi-jiten-grade'));
+      if (isVisible(grade.name)) {
+        grades.appendChild(actionButton(grade.label, grade.name, view, onAction, 'hoshi-jiten-grade'));
+      }
     });
-    actions.appendChild(grades);
+    if (grades.childNodes.length) actions.appendChild(grades);
 
     var decks = element('div', 'hoshi-jiten-decks');
-    decks.appendChild(actionButton(
-      hasState(card, 'mastered') ? 'Remove never forget' : 'Never forget',
-      'neverForget',
-      view,
-      onAction
-    ));
-    decks.appendChild(actionButton(
-      hasState(card, 'blacklisted') ? 'Remove blacklist' : 'Blacklist',
-      'blacklist',
-      view,
-      onAction
-    ));
-    decks.appendChild(actionButton(
-      view.confirming ? 'Tap again to forget' : 'Forget',
-      'forget',
-      view,
-      onAction,
-      view.confirming ? 'hoshi-jiten-confirming' : ''
-    ));
-    actions.appendChild(decks);
+    if (isVisible('neverForget')) {
+      decks.appendChild(actionButton(
+        hasState(card, 'mastered') ? 'Remove never forget' : 'Never forget',
+        'neverForget',
+        view,
+        onAction
+      ));
+    }
+    if (isVisible('blacklist')) {
+      decks.appendChild(actionButton(
+        hasState(card, 'blacklisted') ? 'Remove blacklist' : 'Blacklist',
+        'blacklist',
+        view,
+        onAction
+      ));
+    }
+    if (isVisible('forget')) {
+      decks.appendChild(actionButton(
+        view.confirming ? 'Tap again to forget' : 'Forget',
+        'forget',
+        view,
+        onAction,
+        view.confirming ? 'hoshi-jiten-confirming' : ''
+      ));
+    }
+    if (decks.childNodes.length) actions.appendChild(decks);
 
     if (view.failed) {
       actions.appendChild(element('div', 'hoshi-jiten-failed', 'Jiten did not answer. Nothing was changed.'));
     }
-    return actions;
+    return actions.childNodes.length ? actions : null;
   }
 
   var state = {

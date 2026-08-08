@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.map
 data class JitenSettings(
     val enabled: Boolean = false,
     val apiKey: String = "",
+    val visibleActions: Set<JitenReaderAction> = JitenReaderAction.entries.toSet(),
 )
 
 interface JitenSettingsRepository {
@@ -48,11 +50,17 @@ class DataStoreJitenSettingsRepository(
         JitenSettings(
             enabled = this[KEY_ENABLED] ?: false,
             apiKey = this[KEY_API_KEY].orEmpty(),
+            visibleActions = JitenReaderAction.entries
+                .filterNot { action -> action.wireName in this[KEY_HIDDEN_ACTIONS].orEmpty() }
+                .toSet(),
         )
 
     private fun MutablePreferences.writeJitenSettings(settings: JitenSettings) {
         this[KEY_ENABLED] = settings.enabled
         this[KEY_API_KEY] = settings.apiKey
+        this[KEY_HIDDEN_ACTIONS] = JitenReaderAction.entries
+            .filterNot(settings.visibleActions::contains)
+            .mapTo(mutableSetOf(), JitenReaderAction::wireName)
     }
 
     companion object {
@@ -60,5 +68,6 @@ class DataStoreJitenSettingsRepository(
 
         private val KEY_ENABLED = booleanPreferencesKey("jitenEnabled")
         private val KEY_API_KEY = stringPreferencesKey("jitenApiKey")
+        private val KEY_HIDDEN_ACTIONS = stringSetPreferencesKey("jitenHiddenActions")
     }
 }

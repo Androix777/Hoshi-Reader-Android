@@ -737,4 +737,13 @@
     <string name="jiten_connection_server_error">Jiten 返回了错误。请稍后重试。</string>
     <string name="jiten_connection_server_error_code">Jiten 返回了错误 (%1$d)。请稍后重试。</string>
     <string name="jiten_connection_unreachable">无法连接 jiten.moe。请检查网络连接。</string>
+    <string name="jiten_card_actions">卡片操作</string>
+    <string name="jiten_card_actions_description">选择要显示在 Jiten 卡片顶部的紧凑按钮。</string>
+    <string name="jiten_action_again">重来</string>
+    <string name="jiten_action_hard">困难</string>
+    <string name="jiten_action_good">良好</string>
+    <string name="jiten_action_easy">简单</string>
+    <string name="jiten_action_never_forget">永不忘记</string>
+    <string name="jiten_action_blacklist">黑名单</string>
+    <string name="jiten_action_forget">忘记</string>
 </resources>

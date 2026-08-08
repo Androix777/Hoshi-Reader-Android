@@ -169,6 +169,32 @@ fun JitenSettingsView(
                         )
                     }
                 }
+                item {
+                    JitenSettingsCard {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                            headlineContent = { Text(stringResource(R.string.jiten_card_actions)) },
+                            supportingContent = { Text(stringResource(R.string.jiten_card_actions_description)) },
+                        )
+                        JitenReaderAction.entries.forEach { action ->
+                            HorizontalDivider()
+                            ListItem(
+                                colors = ListItemDefaults.colors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                                headlineContent = { Text(stringResource(action.labelRes)) },
+                                trailingContent = {
+                                    Switch(
+                                        checked = action in uiState.settings.visibleActions,
+                                        onCheckedChange = { visible ->
+                                            viewModel.updateActionVisible(action, visible)
+                                        },
+                                    )
+                                },
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -179,6 +205,17 @@ private val JitenConnectionStatus.labelRes: Int
         JitenConnectionStatus.Unknown -> R.string.jiten_connection_untested
         JitenConnectionStatus.Connected -> R.string.jiten_connection_connected
         JitenConnectionStatus.Failed -> R.string.jiten_connection_failed
+    }
+
+private val JitenReaderAction.labelRes: Int
+    get() = when (this) {
+        JitenReaderAction.Again -> R.string.jiten_action_again
+        JitenReaderAction.Hard -> R.string.jiten_action_hard
+        JitenReaderAction.Good -> R.string.jiten_action_good
+        JitenReaderAction.Easy -> R.string.jiten_action_easy
+        JitenReaderAction.NeverForget -> R.string.jiten_action_never_forget
+        JitenReaderAction.Blacklist -> R.string.jiten_action_blacklist
+        JitenReaderAction.Forget -> R.string.jiten_action_forget
     }
 
 @Composable

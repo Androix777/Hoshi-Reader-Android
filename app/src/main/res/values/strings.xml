@@ -739,4 +739,13 @@
     <string name="jiten_connection_server_error">Jiten reported an error. Try again later.</string>
     <string name="jiten_connection_server_error_code">Jiten reported an error (%1$d). Try again later.</string>
     <string name="jiten_connection_unreachable">Could not reach jiten.moe. Check your connection.</string>
+    <string name="jiten_card_actions">Card actions</string>
+    <string name="jiten_card_actions_description">Choose which compact buttons appear at the top of a Jiten card.</string>
+    <string name="jiten_action_again">Again</string>
+    <string name="jiten_action_hard">Hard</string>
+    <string name="jiten_action_good">Good</string>
+    <string name="jiten_action_easy">Easy</string>
+    <string name="jiten_action_never_forget">Never forget</string>
+    <string name="jiten_action_blacklist">Blacklist</string>
+    <string name="jiten_action_forget">Forget</string>
 </resources>
