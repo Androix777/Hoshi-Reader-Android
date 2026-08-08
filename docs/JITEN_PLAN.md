@@ -70,7 +70,7 @@ hoshi-web/reader/
   reader-jiten-paragraphs.js  DOM → paragraphs + raw-offset fragments  (done)
   reader-jiten-highlight.js   apply/remove word spans                  (done)
   reader-jiten.css            state classes                            (done)
-  reader-jiten.js             controller: collect, request, apply      (done)
+  reader-jiten.js             controller: observe, request, apply      (done)
   reader-jiten-tap.js         hit-test .jiten-word before normal selection
 ```
 
@@ -179,10 +179,72 @@ Decisions taken while wiring it up:
   scratch. Highlights need no repair: they hold wrapper elements, which survive
   a split of the text inside them.
 
-Verified on a device: a chapter colours, and the saved position is byte-identical
-before and after. Not covered yet: the visual novel runtime never calls `start`,
-since it has no restore scripts. Paginated shares the continuous restore path and
-is coloured today — whether column pagination survives it still needs checking.
+Verified on a device in both view modes: text colours, and the saved position is
+unchanged before and after. The visual novel runtime is still uncoloured — it
+never calls `start`, having no restore scripts.
+
+**2b. Parsing what is about to be read.** A chapter is not a unit of work: both
+view modes load a whole chapter into the page, and a book can be one chapter of
+a million characters. Text is parsed as it approaches the viewport instead,
+after the browser extension's `IntersectionObserver` scoping in
+`apps/parser/base.parser.ts`.
+
+- A parse unit is the deepest element with no block child that carries text —
+  in prose, one paragraph. Descending is the point: a chapter wrapped in one
+  `div` would otherwise be a single unit again. `br` and `hr` carry no text, so
+  they are not containers and do not strand the text around them.
+- `rootMargin` is `200%`, which is "about two screens ahead" in continuous and
+  "about two pages ahead" in paginated, since a page is a viewport. Fetching
+  too early costs one request; too late is visibly uncoloured text.
+- The observer's root must be the element the reader scrolls
+  (`hoshiReader.getScrollContext().scrollEl`), which paginated mode both scrolls
+  and clips to. `rootMargin` expands the root, not an intermediate clip, so
+  rooted at the viewport the lookahead silently becomes none and colouring
+  lands after each page turn. Continuous scrolls the viewport, where the
+  default root is already right.
+- Units that come into reach within 500ms travel as one request. One request
+  per paragraph trades a chapter of work for a chapter of round trips, and a
+  window shorter than a scroll batches nothing: paragraphs cross the margin
+  about a tenth of a second apart. Kotlin still splits the result into
+  API-sized batches, so the window controls round trips, not request size.
+- `JitenRepository` serializes every caller. With units arriving as the reader
+  scrolls, that plus cancelling what leaves the viewport is what bounds the
+  request rate — roughly one in flight, whatever the dispatch rate.
+- Colouring defers `buildNodeOffsets`, and the controller runs it, plus the
+  Sasayaki repair, once per burst. Both cost a pass over the chapter, which
+  per paragraph would be quadratic.
+- Request ids are opaque strings with a per-page-load prefix. A chapter change
+  builds a fresh controller whose counter restarts, and its first request
+  retires the previous chapter's queued work; the prefix is what stops an
+  answer landing on the chapter that replaced the one that asked.
+- A failed request must be reported back. The observer fires once for text
+  crossing into view and never again for text that has not moved, so silence
+  leaves that text uncoloured for as long as it stays on screen — the failure
+  mode an offline stretch produces, and one that survives the network coming
+  back. An empty answer is settled rather than failed: Jiten switched off is
+  not something a retry fixes.
+- Offline is a normal mode for this reader, not an error. `navigator.onLine`
+  skips requests certain to fail, so an offline hour costs a boolean read now
+  and then rather than a request; the `online` event, not a timer, is what ends
+  the wait. Retries back off from 5s to 2min for the other case, where the
+  browser claims a network that goes nowhere.
+- A pending retry blocks dispatching, not just sweeping. Text keeps arriving as
+  the reader scrolls, so without that a network the browser believes in but
+  cannot reach would cost a request per screenful — the backoff would pace only
+  the sweep while scrolling routed around it.
+- Retrying stops while the page is hidden. The reader never pauses its WebView,
+  so a book left open offline would otherwise keep probing in the background;
+  `visibilitychange` puts the work down and picks it back up.
+- Once the backoff runs out of room the sweep tries regardless of `onLine`.
+  That flag is reported by the WebView and can be wrong, and without the probe
+  a stuck `false` means a chapter that never colours with nothing to show why —
+  at that delay, insurance against a silent permanent failure costs one request
+  every couple of minutes.
+
+Still uncached: leaving and re-entering a chapter re-parses it, and a chapter
+first read offline stays uncoloured until it is read again online. Card states
+outlive a session, so a store keyed by word and reading would colour known words
+with no network at all — the real offline answer, and bigger than this slice.
 
 **3. Mode switch.** The switch controls tap behavior only: on, a tap opens the
 Jiten popup; off, the dictionary popup. Colouring stays applied either way.

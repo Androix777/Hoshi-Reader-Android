@@ -12,40 +12,93 @@ import kotlinx.serialization.json.Json
  */
 internal const val JitenReaderBridgeName = "HoshiJiten"
 
+/**
+ * What the controller asks of Kotlin. Request ids are opaque strings carrying a
+ * per-page-load prefix: a chapter change builds a new controller whose counter
+ * restarts, and an answer must never land on the chapter that replaced the one
+ * that asked for it.
+ */
+internal interface JitenReaderRequests {
+    fun beginSession(sessionId: String)
+    fun parse(requestId: String, paragraphsJson: String)
+    fun cancel(requestId: String)
+}
+
+/** For reader previews and tests, which have no view model to answer with. */
+internal object NoJitenReaderRequests : JitenReaderRequests {
+    override fun beginSession(sessionId: String) = Unit
+    override fun parse(requestId: String, paragraphsJson: String) = Unit
+    override fun cancel(requestId: String) = Unit
+}
+
 private class JitenReaderBridge(
     private val webView: WebView,
-    private val onParseRequested: (Int, String) -> Unit,
+    private val requests: (WebView) -> JitenReaderRequests,
 ) {
     @JavascriptInterface
-    fun parse(requestId: Int, paragraphsJson: String) {
-        webView.post { onParseRequested(requestId, paragraphsJson) }
+    fun beginSession(sessionId: String) {
+        webView.post { requests(webView).beginSession(sessionId) }
+    }
+
+    @JavascriptInterface
+    fun parse(requestId: String, paragraphsJson: String) {
+        webView.post { requests(webView).parse(requestId, paragraphsJson) }
+    }
+
+    @JavascriptInterface
+    fun cancel(requestId: String) {
+        webView.post { requests(webView).cancel(requestId) }
     }
 }
 
-internal fun WebView.installJitenReaderBridge(onParseRequested: (WebView, Int, String) -> Unit) {
-    addJavascriptInterface(
-        JitenReaderBridge(this) { requestId, paragraphsJson ->
-            onParseRequested(this, requestId, paragraphsJson)
-        },
-        JitenReaderBridgeName,
-    )
+internal fun WebView.installJitenReaderBridge(requests: (WebView) -> JitenReaderRequests) {
+    addJavascriptInterface(JitenReaderBridge(this, requests), JitenReaderBridgeName)
 }
 
 internal fun WebView.removeJitenReaderBridge() {
     removeJavascriptInterface(JitenReaderBridgeName)
 }
 
-internal fun WebView.applyJitenReaderTokens(requestId: Int, tokensJson: String) {
+/**
+ * Ties the controller's requests to a view model and the WebView that asked, so
+ * upstream reader code only has to hand over the two.
+ */
+internal fun jitenReaderRequests(
+    viewModel: JitenReaderViewModel,
+    webView: WebView,
+): JitenReaderRequests = object : JitenReaderRequests {
+    override fun beginSession(sessionId: String) = viewModel.beginSession(sessionId)
+
+    override fun parse(requestId: String, paragraphsJson: String) =
+        viewModel.parse(
+            requestId = requestId,
+            paragraphsJson = paragraphsJson,
+            onTokens = { tokensJson -> webView.applyJitenReaderTokens(requestId, tokensJson) },
+            onFailed = { webView.failJitenReaderRequest(requestId) },
+        )
+
+    override fun cancel(requestId: String) = viewModel.cancel(requestId)
+}
+
+internal fun WebView.applyJitenReaderTokens(requestId: String, tokensJson: String) {
     evaluateJavascript(jitenReaderTokensInvocation(requestId, tokensJson), null)
 }
+
+internal fun WebView.failJitenReaderRequest(requestId: String) {
+    evaluateJavascript(jitenReaderFailureInvocation(requestId), null)
+}
+
+internal fun jitenReaderFailureInvocation(requestId: String): String =
+    "if (window.hoshiReaderJiten) { window.hoshiReaderJiten.onFailed(" +
+        "${Json.encodeToString(requestId)}); }"
 
 /**
  * The guard matters: the reader scripts are always injected, but the visual
  * novel runtime never defines the controller.
  */
-internal fun jitenReaderTokensInvocation(requestId: Int, tokensJson: String): String =
-    "if (window.hoshiReaderJiten) { window.hoshiReaderJiten.onTokens($requestId, " +
-        "${Json.encodeToString(tokensJson)}); }"
+internal fun jitenReaderTokensInvocation(requestId: String, tokensJson: String): String =
+    "if (window.hoshiReaderJiten) { window.hoshiReaderJiten.onTokens(" +
+        "${Json.encodeToString(requestId)}, ${Json.encodeToString(tokensJson)}); }"
 
 internal fun jitenReaderStartInvocation(): String =
     "if (window.hoshiReaderJiten) { window.hoshiReaderJiten.start(); }"

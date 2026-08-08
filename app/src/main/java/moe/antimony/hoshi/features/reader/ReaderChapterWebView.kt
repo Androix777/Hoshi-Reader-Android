@@ -52,6 +52,8 @@ import moe.antimony.hoshi.content.ContentLanguageProfile
 import moe.antimony.hoshi.epub.EpubBook
 import moe.antimony.hoshi.epub.HighlightColor
 import moe.antimony.hoshi.features.dictionary.DictionarySettings
+import moe.antimony.hoshi.features.jiten.JitenReaderRequests
+import moe.antimony.hoshi.features.jiten.NoJitenReaderRequests
 import moe.antimony.hoshi.features.jiten.installJitenReaderBridge
 import moe.antimony.hoshi.features.jiten.removeJitenReaderBridge
 import moe.antimony.hoshi.features.sasayaki.SasayakiSettings
@@ -96,7 +98,7 @@ internal fun ChapterWebView(
     readerPopupFrames: List<ReaderLookupPopupFramePayload>,
     fontManager: ReaderFontManager,
     systemDark: Boolean,
-    onJitenParseRequested: (WebView, Int, String) -> Unit = { _, _, _ -> },
+    jitenReaderRequests: (WebView) -> JitenReaderRequests = { NoJitenReaderRequests },
     onBeforeRestoreVisible: (WebView) -> ReaderRestoreBeforeVisibleAction? = { null },
     modifier: Modifier = Modifier,
 ) {
@@ -119,7 +121,7 @@ internal fun ChapterWebView(
     val currentOnRestoreStarted = rememberUpdatedState(onRestoreStarted)
     val currentOnRestoreCompleted = rememberUpdatedState(onRestoreCompleted)
     val currentOnBeforeRestoreVisible = rememberUpdatedState(onBeforeRestoreVisible)
-    val currentOnJitenParseRequested = rememberUpdatedState(onJitenParseRequested)
+    val currentJitenReaderRequests = rememberUpdatedState(jitenReaderRequests)
     val context = LocalContext.current
     val readerWebAssets = remember(context) { ReaderWebAssets.load(context) }
     val viewportDensity = context.resources.displayMetrics.density.coerceAtLeast(1f)
@@ -258,8 +260,8 @@ internal fun ChapterWebView(
                     },
                     "HoshiReaderImage",
                 )
-                installJitenReaderBridge { jitenWebView, requestId, paragraphsJson ->
-                    currentOnJitenParseRequested.value(jitenWebView, requestId, paragraphsJson)
+                installJitenReaderBridge { jitenWebView ->
+                    currentJitenReaderRequests.value(jitenWebView)
                 }
                 ReaderLookupPopupWebBridge.install(this, readerPopupBridgeHolder)
                 webViewClient = EpubWebViewClient(

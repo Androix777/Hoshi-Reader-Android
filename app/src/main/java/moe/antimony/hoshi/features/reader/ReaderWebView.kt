@@ -64,7 +64,7 @@ import moe.antimony.hoshi.features.audio.LocalAudioRepository
 import moe.antimony.hoshi.features.audio.WordAudioPlayer
 import moe.antimony.hoshi.features.anki.AnkiViewModel
 import moe.antimony.hoshi.features.jiten.JitenReaderViewModel
-import moe.antimony.hoshi.features.jiten.applyJitenReaderTokens
+import moe.antimony.hoshi.features.jiten.jitenReaderRequests
 import moe.antimony.hoshi.features.dictionary.DictionaryImageRequestHandler
 import moe.antimony.hoshi.features.dictionary.DictionarySettings
 import moe.antimony.hoshi.features.dictionary.LookupPopupAssets
@@ -1700,10 +1700,8 @@ fun ReaderWebView(
                             }
                         },
                         onWebViewReady = { webView = it },
-                        onJitenParseRequested = { jitenWebView, requestId, paragraphsJson ->
-                            jitenReaderViewModel.parseChapter(paragraphsJson) { tokensJson ->
-                                jitenWebView.applyJitenReaderTokens(requestId, tokensJson)
-                            }
+                        jitenReaderRequests = { jitenWebView ->
+                            jitenReaderRequests(jitenReaderViewModel, jitenWebView)
                         },
                         isWebViewRestoring = stateHolder.isWebViewRestoring,
                         webViewRestoreEpoch = stateHolder.webViewRestoreEpoch,

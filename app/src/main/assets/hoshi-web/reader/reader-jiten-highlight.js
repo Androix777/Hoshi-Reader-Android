@@ -115,8 +115,12 @@
    *
    * The paragraph list is consumed: applying splits text nodes, so a caller
    * that wants to recolour must collect paragraphs again.
+   *
+   * `options.deferOffsets` leaves `buildNodeOffsets` to the caller. Colouring a
+   * chapter one paragraph at a time would otherwise pay for a pass over the
+   * whole document per paragraph.
    */
-  function applyTokens(root, paragraphs, tokensByParagraph) {
+  function applyTokens(root, paragraphs, tokensByParagraph, options) {
     ensureStyles();
     var scope = root || document.body;
     var planned = planTokens(paragraphs, tokensByParagraph, scope);
@@ -141,7 +145,8 @@
     }
 
     var applied = planned.filter(function(entry) { return entry.applied; }).length;
-    if (applied && global.hoshiReader) global.hoshiReader.buildNodeOffsets();
+    var deferOffsets = !!(options && options.deferOffsets);
+    if (applied && !deferOffsets && global.hoshiReader) global.hoshiReader.buildNodeOffsets();
     return applied;
   }
 
