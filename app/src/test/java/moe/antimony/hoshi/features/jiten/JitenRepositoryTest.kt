@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -110,6 +111,139 @@ class JitenRepositoryTest {
         assertEquals(1, token.wordId)
         assertEquals(listOf("young"), token.states)
     }
+
+    @Test
+    fun parsingCachesTheCardsItSaw() = runBlocking {
+        val transport = FakeJitenTransport(FakeJitenTransport.ok(TwoParagraphResponse))
+        val repository = jitenRepository(transport)
+
+        repository.parseChapter(listOf("時間がある", "海が見えた"))
+
+        // A tap answered from here is a tap that costs no request.
+        assertEquals("時間", repository.card(JitenWordKey(wordId = 1, readingIndex = 0))?.spelling)
+        assertEquals("海", repository.card(JitenWordKey(wordId = 2, readingIndex = 0))?.spelling)
+        assertEquals(1, transport.requests.size)
+    }
+
+    @Test
+    fun aWordThatWasNeverParsedIsNotCached() = runBlocking {
+        val transport = FakeJitenTransport(FakeJitenTransport.ok(TwoParagraphResponse))
+        val repository = jitenRepository(transport)
+
+        repository.parseChapter(listOf("時間がある"))
+
+        assertNull(repository.card(JitenWordKey(wordId = 404, readingIndex = 0)))
+        // A reading is part of the identity, so the other reading is a miss too.
+        assertNull(repository.card(JitenWordKey(wordId = 1, readingIndex = 7)))
+    }
+
+    @Test
+    fun rememberingACardReplacesTheStatesParsingLeftBehind() = runBlocking {
+        val transport = FakeJitenTransport(FakeJitenTransport.ok(TwoParagraphResponse))
+        val repository = jitenRepository(transport)
+        repository.parseChapter(listOf("時間がある"))
+        val key = JitenWordKey(wordId = 1, readingIndex = 0)
+        val reviewed = repository.card(key)!!.copy(states = listOf(JitenCardState.Mature))
+
+        repository.rememberCards(listOf(reviewed))
+
+        // Reviewing a word must not leave the popup showing its former state.
+        assertEquals(listOf(JitenCardState.Mature), repository.card(key)?.states)
+    }
+
+    @Test
+    fun gradingReviewsTheCardAndReportsTheStatesTheServerSettledOn() = runBlocking {
+        val transport = FakeJitenTransport(
+            FakeJitenTransport.ok(TwoParagraphResponse),
+            FakeJitenTransport.ok("{}"),
+            FakeJitenTransport.ok("""{"result": [[1]]}"""),
+        )
+        val repository = jitenRepository(transport)
+        repository.parseChapter(listOf("時間がある"))
+        val key = JitenWordKey(wordId = 1, readingIndex = 0)
+
+        val states = repository.applyAction(key, JitenReaderAction.Good)
+
+        assertTrue(transport.requests[1].url.endsWith("/srs/review"))
+        // Read back, not predicted: where a grade lands is the server's rule.
+        assertEquals(listOf(JitenCardState.Young), states)
+        // And the cache is what the next tap reads, so it cannot keep the old.
+        assertEquals(listOf(JitenCardState.Young), repository.card(key)?.states)
+    }
+
+    @Test
+    fun neverForgetTogglesOffForACardThatAlreadyHasIt() = runBlocking {
+        val transport = FakeJitenTransport(
+            FakeJitenTransport.ok("{}"),
+            FakeJitenTransport.ok("""{"result": [[2]]}"""),
+        )
+        val repository = jitenRepository(transport)
+        val key = JitenWordKey(wordId = 5, readingIndex = 0)
+        repository.rememberCards(listOf(cardWith(key, JitenCardState.Mastered)))
+
+        repository.applyAction(key, JitenReaderAction.NeverForget)
+
+        assertEquals("neverForget-remove", transport.requests[0].sentState())
+    }
+
+    @Test
+    fun blacklistAddsForACardThatDoesNotHaveIt() = runBlocking {
+        val transport = FakeJitenTransport(
+            FakeJitenTransport.ok("{}"),
+            FakeJitenTransport.ok("""{"result": [[3]]}"""),
+        )
+        val repository = jitenRepository(transport)
+        val key = JitenWordKey(wordId = 5, readingIndex = 0)
+        repository.rememberCards(listOf(cardWith(key, JitenCardState.New)))
+
+        repository.applyAction(key, JitenReaderAction.Blacklist)
+
+        assertEquals("blacklist-add", transport.requests[0].sentState())
+    }
+
+    @Test
+    fun anUncachedCardIsTreatedAsNotAMemberRatherThanRefused() = runBlocking {
+        val transport = FakeJitenTransport(
+            FakeJitenTransport.ok("{}"),
+            FakeJitenTransport.ok("""{"result": [[3]]}"""),
+        )
+        val repository = jitenRepository(transport)
+
+        // Evicted, or the chapter was parsed in an earlier session. Adding twice
+        // is harmless; doing nothing would strand the button.
+        repository.applyAction(JitenWordKey(wordId = 5, readingIndex = 0), JitenReaderAction.Blacklist)
+
+        assertEquals("blacklist-add", transport.requests[0].sentState())
+    }
+
+    @Test
+    fun disabledJitenPerformsNoAction() = runBlocking {
+        val transport = FakeJitenTransport(FakeJitenTransport.ok("{}"))
+        val repository = jitenRepository(
+            transport,
+            FakeJitenSettingsRepository(JitenSettings(enabled = false, apiKey = "test-key")),
+        )
+
+        val states = repository.applyAction(JitenWordKey(1, 0), JitenReaderAction.Good)
+
+        assertTrue(states.isEmpty())
+        assertTrue(transport.requests.isEmpty())
+    }
+
+    private fun cardWith(key: JitenWordKey, vararg states: JitenCardState) = JitenCard(
+        key = key,
+        spelling = "本",
+        reading = "ほん",
+        frequencyRank = 0,
+        partsOfSpeech = emptyList(),
+        meanings = emptyList(),
+        states = states.toList(),
+        pitchAccents = emptyList(),
+        studyDeckIds = emptyList(),
+    )
+
+    private fun RecordedJitenRequest.sentState(): String =
+        (Json.parseToJsonElement(body!!) as JsonObject).getValue("state").jsonPrimitive.content
 
     private fun jitenRepository(
         transport: JitenHttpTransport,

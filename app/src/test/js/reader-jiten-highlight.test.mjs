@@ -111,13 +111,16 @@ class TestElement extends TestNode {
         this.attributes.delete(name);
     }
 
-    /** Supports only the `.class` selector this module uses. */
+    /** Supports the `.class` and `[attr="value"]` selectors this module uses. */
     querySelectorAll(selector) {
-        const name = selector.replace(/^\./, '');
+        const attributes = [...selector.matchAll(/\[([\w-]+)="([^"]*)"\]/g)];
+        const matches = attributes.length
+            ? (node) => attributes.every(([, name, value]) => node.getAttribute(name) === value)
+            : (node) => node.classes.has(selector.replace(/^\./, ''));
         const found = [];
         const visit = (node) => {
             if (node.nodeType !== 1) return;
-            if (node.classes.has(name)) found.push(node);
+            if (matches(node)) found.push(node);
             node.childNodes.forEach(visit);
         };
         this.childNodes.forEach(visit);
@@ -313,4 +316,57 @@ test('jiten highlight ignores tokens no fragment covers', () => {
 
     assert.equal(applied, 0);
     assert.equal(reader.rebuilds, 0);
+});
+
+test('jiten highlight repaints every occurrence of a reviewed word', () => {
+    const { paragraphs, highlight } = load();
+    const root = element('p', '本を読む。本が好き。');
+    // 本 twice, same card; 読 is a different word and must be left alone.
+    highlight.applyTokens(root, paragraphs.collectParagraphs(root), [[
+        token(0, 1, ['new'], 7, 0),
+        token(3, 4, ['due'], 9, 0),
+        token(5, 6, ['new'], 7, 0),
+    ]]);
+
+    const repainted = highlight.updateStates(7, 0, ['mature'], root);
+
+    assert.equal(repainted, 2);
+    const marked = root.querySelectorAll('[data-jiten-word-id="7"][data-jiten-reading-index="0"]');
+    marked.forEach((element) => {
+        assert.equal(element.classList.contains('jiten-mature'), true);
+        assert.equal(element.classList.contains('jiten-new'), false);
+        // The word is still a word: only its state classes were replaced.
+        assert.equal(element.classList.contains('jiten-word'), true);
+    });
+    const other = root.querySelectorAll('[data-jiten-word-id="9"][data-jiten-reading-index="0"]')[0];
+    assert.equal(other.classList.contains('jiten-due'), true);
+});
+
+test('jiten highlight repaints only the reading that was reviewed', () => {
+    const { paragraphs, highlight } = load();
+    const root = element('p', '本本');
+    highlight.applyTokens(root, paragraphs.collectParagraphs(root), [[
+        token(0, 1, ['new'], 7, 0),
+        token(1, 2, ['new'], 7, 1),
+    ]]);
+
+    // A word's readings are separate cards, so reviewing one leaves the other.
+    assert.equal(highlight.updateStates(7, 0, ['mature'], root), 1);
+    assert.equal(
+        root.querySelectorAll('[data-jiten-word-id="7"][data-jiten-reading-index="1"]')[0]
+            .classList.contains('jiten-new'),
+        true,
+    );
+});
+
+test('jiten highlight clears the old state when a card comes back with none', () => {
+    const { paragraphs, highlight } = load();
+    const root = element('p', '本');
+    highlight.applyTokens(root, paragraphs.collectParagraphs(root), [[token(0, 1, ['blacklisted'], 7, 0)]]);
+
+    highlight.updateStates(7, 0, [], root);
+
+    const marked = root.querySelectorAll('[data-jiten-word-id="7"][data-jiten-reading-index="0"]')[0];
+    assert.equal(marked.classList.contains('jiten-blacklisted'), false);
+    assert.equal(marked.classList.contains('jiten-word'), true);
 });

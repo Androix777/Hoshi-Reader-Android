@@ -200,6 +200,8 @@ window.hoshiSelection = {
     },
 
     postTextSelected(selection) {
+        const jiten = window.hoshiReaderJitenTap?.describe?.(this.selection);
+        if (jiten) selection = { ...selection, jiten };
         if (this.options.bridge === 'android-reader') {
             const bridge = window.HoshiTextSelection || globalThis.HoshiTextSelection;
             bridge?.postMessage?.(JSON.stringify(selection));

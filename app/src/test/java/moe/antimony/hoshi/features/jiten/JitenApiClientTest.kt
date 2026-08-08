@@ -195,13 +195,26 @@ class JitenApiClientTest {
     }
 
     @Test
-    fun setVocabularyStateSendsTheWireStateName() = runBlocking {
+    fun setVocabularyStateSendsTheDeckActionName() = runBlocking {
         val transport = FakeJitenTransport(FakeJitenTransport.ok("{}"))
 
-        jitenApiClient(transport).setVocabularyState(JitenWordKey(42, 0), JitenCardState.Blacklisted)
+        jitenApiClient(transport).setVocabularyState(JitenWordKey(42, 0), JitenDeckAction.BlacklistAdd)
+
+        val request = transport.requests.single()
+        assertEquals("${JitenApiClient.Endpoint}/srs/set-vocabulary-state", request.url)
+        val body = Json.parseToJsonElement(request.body!!) as JsonObject
+        // Not a card state: the endpoint takes a deck membership being changed.
+        assertEquals("blacklist-add", body.getValue("state").jsonPrimitive.content)
+    }
+
+    @Test
+    fun removingAMembershipIsItsOwnAction() = runBlocking {
+        val transport = FakeJitenTransport(FakeJitenTransport.ok("{}"))
+
+        jitenApiClient(transport).setVocabularyState(JitenWordKey(42, 0), JitenDeckAction.NeverForgetRemove)
 
         val body = Json.parseToJsonElement(transport.requests.single().body!!) as JsonObject
-        assertEquals("blacklisted", body.getValue("state").jsonPrimitive.content)
+        assertEquals("neverForget-remove", body.getValue("state").jsonPrimitive.content)
     }
 
     @Test

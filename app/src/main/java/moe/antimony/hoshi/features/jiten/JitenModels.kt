@@ -43,6 +43,20 @@ enum class JitenCardState(
     }
 }
 
+/**
+ * What `srs/set-vocabulary-state` accepts, which is not a card state at all but
+ * a deck membership being added or removed — plus `forget-add`, which is a deck
+ * name only by convention. Never Forget and Blacklist are memberships, so they
+ * toggle; forgetting is one-way and destroys the card's review history.
+ */
+enum class JitenDeckAction(val wireValue: String) {
+    NeverForgetAdd("neverForget-add"),
+    NeverForgetRemove("neverForget-remove"),
+    BlacklistAdd("blacklist-add"),
+    BlacklistRemove("blacklist-remove"),
+    Forget("forget-add"),
+}
+
 enum class JitenRating(val wireValue: Int) {
     Unknown(0),
     Again(1),

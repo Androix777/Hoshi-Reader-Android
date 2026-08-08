@@ -4,6 +4,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import moe.antimony.hoshi.features.jiten.JitenWordKey
 import org.json.JSONArray
 
 internal class ReaderSelectionBridge(
@@ -39,6 +40,7 @@ internal object ReaderSelectionBridgePayload {
             ),
             normalizedOffset = payload.normalizedOffset,
             sentenceOffset = payload.sentenceOffset,
+            jiten = payload.jiten?.let { JitenWordKey(wordId = it.wordId, readingIndex = it.readingIndex) },
         )
     }
 
@@ -68,6 +70,14 @@ internal object ReaderSelectionBridgePayload {
         val rect: Rect,
         val normalizedOffset: Int? = null,
         val sentenceOffset: Int? = null,
+        val jiten: JitenKey? = null,
+    )
+
+    /** Absent unless `reader-jiten-tap.js` found a card under the tap. */
+    @Serializable
+    private data class JitenKey(
+        val wordId: Int,
+        val readingIndex: Int,
     )
 
     @Serializable

@@ -8,6 +8,20 @@ import org.junit.Test
 
 class ReaderLookupPopupBridgeMessageTest {
     @Test
+    fun parsesTheJitenCardRequest() {
+        assertEquals(
+            ReaderLookupPopupBridgeMessage.JitenCard(popupId = "root", messageId = "7"),
+            ReaderLookupPopupBridgeMessage.fromJson("""{"name":"jitenCard","popupId":"root","id":"7"}"""),
+        )
+    }
+
+    @Test
+    fun rejectsAJitenCardRequestWithNothingToReplyTo() {
+        // The page awaits a promise; a request with no id could never resolve.
+        assertNull(ReaderLookupPopupBridgeMessage.fromJson("""{"name":"jitenCard","popupId":"root"}"""))
+    }
+
+    @Test
     fun parsesReaderPopupBridgeMessages() {
         assertEquals(
             ReaderLookupPopupBridgeMessage.OpenLink(

@@ -155,6 +155,28 @@
       .filter(function(name) { return name.indexOf('jiten-') === 0; });
   }
 
+  /** The state classes alone: [WordClass] marks the word, it is not a state. */
+  function stateClasses(element) {
+    return jitenClasses(element).filter(function(name) { return name !== WordClass; });
+  }
+
+  /**
+   * Repaint a word after its card changed, everywhere it appears rather than
+   * only where it was tapped: the state belongs to the word, and leaving the
+   * other occurrences on the old colour would misreport them until the chapter
+   * is parsed again.
+   */
+  function updateStates(wordId, readingIndex, states, root) {
+    var selector = '[' + WordIdAttribute + '="' + String(wordId) + '"]' +
+      '[' + ReadingIndexAttribute + '="' + String(readingIndex) + '"]';
+    var marked = Array.from((root || document).querySelectorAll(selector));
+    marked.forEach(function(element) {
+      stateClasses(element).forEach(function(name) { element.classList.remove(name); });
+      (states || []).forEach(function(state) { element.classList.add('jiten-' + state); });
+    });
+    return marked.length;
+  }
+
   /** Undo `applyTokens`, leaving the DOM as the reader built it. */
   function clearTokens(root) {
     var scope = root || document.body;
@@ -176,6 +198,7 @@
   global.hoshiReaderJitenHighlight = {
     applyTokens: applyTokens,
     clearTokens: clearTokens,
+    updateStates: updateStates,
     ensureStyles: ensureStyles
   };
 })(window);

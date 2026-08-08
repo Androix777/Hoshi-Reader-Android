@@ -1,0 +1,183 @@
+/*
+ * The Jiten page and the drag that turns to it.
+ *
+ * The two pages are not siblings: the dictionary is the popup document itself,
+ * so the Jiten page is a fixed layer over it, revealed by clipping rather than
+ * by sliding. Clipping shows the top of the card first — the spelling and the
+ * reading, which is what the drag is being made to check — where a slide from
+ * above would show its bottom edge first and the word last.
+ */
+
+#hoshi-jiten-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Height is the reveal, driven from script; zero is fully hidden. */
+    height: 0;
+    overflow: hidden;
+    z-index: 3;
+    background-color: var(--background-color);
+    /* The reveal is dragged, so it must not also be animated; the script adds
+       this class only for the release. */
+    transition: none;
+}
+
+#hoshi-jiten-page.hoshi-jiten-settling {
+    transition: height 180ms ease-out, transform 180ms ease-out;
+}
+
+/*
+ * Scrollable once turned to: a card with many meanings can outgrow a short
+ * popup, and clipped is unreachable. The drag only arms at its own top, so
+ * scrolling the card cannot turn the page by accident.
+ */
+#hoshi-jiten-page.hoshi-jiten-committed {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Pushed down as the page is revealed, so the two move as one surface. */
+#entries-container {
+    transition: none;
+}
+
+#entries-container.hoshi-jiten-settling {
+    transition: transform 180ms ease-out;
+}
+
+.hoshi-jiten-card {
+    box-sizing: border-box;
+    padding: 12px 14px;
+    color: var(--text-color);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.hoshi-jiten-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+}
+
+/*
+ * Sized and coloured to match `.expression` in `popup.css`: the same word can
+ * be read on either page, and the two pages sitting a drag apart makes any
+ * difference between them read as a difference in the word.
+ */
+.hoshi-jiten-spelling {
+    font-size: 26px;
+    font-family: var(--hoshi-content-font-family);
+    /* Room for the annotation, which otherwise crowds the line above. */
+    line-height: 1.9;
+}
+
+.hoshi-jiten-spelling rt {
+    font-size: 13px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.hoshi-jiten-reading {
+    font-size: 15px;
+    color: var(--text-color-light2);
+    font-family: var(--hoshi-content-font-family);
+}
+
+.hoshi-jiten-frequency {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-color-light3);
+}
+
+/*
+ * The state label repeats what the word's colour in the chapter already said.
+ * It is here because the card is read to confirm the tap found the right word,
+ * and the state is half of that: the same spelling can be a different card.
+ */
+.hoshi-jiten-state {
+    font-size: 12px;
+    padding: 1px 7px;
+    border-radius: 9px;
+    border: 1px solid currentColor;
+}
+
+.hoshi-jiten-meanings {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hoshi-jiten-meaning + .hoshi-jiten-meaning {
+    margin-top: 6px;
+}
+
+.hoshi-jiten-pos {
+    display: block;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--text-color-light3);
+}
+
+.hoshi-jiten-empty {
+    color: var(--text-color-light3);
+}
+
+.hoshi-jiten-actions {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hoshi-jiten-grades,
+.hoshi-jiten-decks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hoshi-jiten-grades > .hoshi-jiten-action {
+    flex: 1 1 0;
+}
+
+.hoshi-jiten-action {
+    font: inherit;
+    font-size: 14px;
+    /* Comfortably above the ~48px tap target on a page reached by dragging. */
+    min-height: 40px;
+    padding: 0 12px;
+    color: var(--text-color);
+    background-color: var(--background-color-dark1);
+    border: 1px solid var(--text-color-light4);
+    border-radius: 8px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.hoshi-jiten-action:disabled {
+    opacity: 0.45;
+}
+
+.hoshi-jiten-action:active:not(:disabled) {
+    background-color: var(--text-color-light4);
+}
+
+/* Armed and waiting for the second tap, which destroys the review history. */
+.hoshi-jiten-action.hoshi-jiten-confirming {
+    color: #e8a735;
+    border-color: #e8a735;
+}
+
+.hoshi-jiten-failed {
+    font-size: 13px;
+    color: #e8a735;
+}
+
+/* Colours match `reader-jiten.css`, so a state reads the same in both places. */
+.hoshi-jiten-state.jiten-new { color: #4b8dff; }
+.hoshi-jiten-state.jiten-young { color: #4ac34a; }
+.hoshi-jiten-state.jiten-due { color: #e8a735; }
+.hoshi-jiten-state.jiten-suspended,
+.hoshi-jiten-state.jiten-blacklisted { color: #777777; }

@@ -22,6 +22,7 @@ internal data class ReaderWebAssets(
     val readerJitenParagraphsJs: String,
     val readerJitenHighlightJs: String,
     val readerJitenJs: String,
+    val readerJitenTapJs: String,
     val readerJitenCss: String,
     val readerCss: String,
 ) {
@@ -54,6 +55,7 @@ internal data class ReaderWebAssets(
                 readerJitenParagraphsJs = context.readAsset("hoshi-web/reader/reader-jiten-paragraphs.js"),
                 readerJitenHighlightJs = context.readAsset("hoshi-web/reader/reader-jiten-highlight.js"),
                 readerJitenJs = context.readAsset("hoshi-web/reader/reader-jiten.js"),
+                readerJitenTapJs = context.readAsset("hoshi-web/reader/reader-jiten-tap.js"),
                 readerJitenCss = context.readAsset("hoshi-web/reader/reader-jiten.css"),
                 readerCss = context.readAsset("hoshi-web/reader/reader.css"),
             )

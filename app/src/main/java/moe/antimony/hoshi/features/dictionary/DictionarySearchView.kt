@@ -510,6 +510,14 @@ fun DictionarySearchView(
                     }
                 }
             }
+            is ReaderLookupPopupBridgeMessage.JitenCard,
+            is ReaderLookupPopupBridgeMessage.JitenAction,
+            -> {
+                // No chapter, so no coloured word was tapped and nothing here
+                // can be acted on. Answered rather than ignored: the page is
+                // waiting on a promise.
+                replyIframeMessage(message.popupId, message.messageId ?: return, "null")
+            }
             is ReaderLookupPopupBridgeMessage.SasayakiReplayCue,
             is ReaderLookupPopupBridgeMessage.SasayakiTogglePlayback,
             is ReaderLookupPopupBridgeMessage.SasayakiPlayForward,

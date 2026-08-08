@@ -63,8 +63,11 @@ import moe.antimony.hoshi.features.audio.AudioSettings
 import moe.antimony.hoshi.features.audio.LocalAudioRepository
 import moe.antimony.hoshi.features.audio.WordAudioPlayer
 import moe.antimony.hoshi.features.anki.AnkiViewModel
+import moe.antimony.hoshi.features.jiten.JitenReaderAction
 import moe.antimony.hoshi.features.jiten.JitenReaderViewModel
 import moe.antimony.hoshi.features.jiten.jitenReaderRequests
+import moe.antimony.hoshi.features.jiten.jitenStatesJson
+import moe.antimony.hoshi.features.jiten.updateJitenReaderStates
 import moe.antimony.hoshi.features.dictionary.DictionaryImageRequestHandler
 import moe.antimony.hoshi.features.dictionary.DictionarySettings
 import moe.antimony.hoshi.features.dictionary.LookupPopupAssets
@@ -805,6 +808,28 @@ fun ReaderWebView(
                 val entry = popupById(message.popupId)?.state?.results?.getOrNull(message.index)
                 val body = entry?.let(LookupPopupHtml::entryJsonString) ?: "null"
                 replyReaderPopupMessage(message.popupId, message.messageId ?: return, body)
+            }
+            is ReaderLookupPopupBridgeMessage.JitenCard -> {
+                val key = popupById(message.popupId)?.state?.selection?.jiten
+                val body = key?.let(jitenReaderViewModel::cardJson) ?: "null"
+                replyReaderPopupMessage(message.popupId, message.messageId ?: return, body)
+            }
+            is ReaderLookupPopupBridgeMessage.JitenAction -> {
+                val messageId = message.messageId ?: return
+                val key = popupById(message.popupId)?.state?.selection?.jiten
+                val action = JitenReaderAction.fromWireName(message.action)
+                if (key == null || action == null) {
+                    replyReaderPopupMessage(message.popupId, messageId, "null")
+                    return
+                }
+                jitenReaderViewModel.act(key, action) { states ->
+                    if (states != null) webView?.updateJitenReaderStates(key, states)
+                    replyReaderPopupMessage(
+                        message.popupId,
+                        messageId,
+                        states?.let(::jitenStatesJson) ?: "null",
+                    )
+                }
             }
             is ReaderLookupPopupBridgeMessage.PopupScrolled -> {
                 val index = popupIndex(message.popupId).takeIf { it >= 0 } ?: return

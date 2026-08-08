@@ -1,9 +1,7 @@
 # Jiten Integration Plan
 
-Jiten reading mode in the Reader: words coloured by card state, and a
-dictionary popup that toggles to a Jiten view. A tap collects both the
-dictionary word and the Jiten token under it when possible, so switching views
-needs no second tap.
+Jiten reading mode in the Reader: words coloured by card state, and a Jiten card
+pulled down over the dictionary popup for the occasional word worth marking.
 
 Ported from the JitenReader browser extension: `shared/jiten/` (API),
 `apps/text-highlighter/` and `apps/paragraph-reader/` (token→DOM mapping),
@@ -62,8 +60,8 @@ features/jiten/
   JitenModels.kt              tokens, cards, knownState → JitenCardState  (done)
   JitenSettingsRepository.kt  DataStore: key, enabled      (done)
   JitenSettingsView[Model].kt settings entry               (done)
-  JitenRepository.kt          chunking, skipping, result alignment     (done)
-  JitenReaderTokens.kt        wire shape for the highlight module      (done)
+  JitenRepository.kt          chunking, skipping, alignment, card cache (done)
+  JitenReaderTokens.kt        wire shapes: highlight tokens, popup card (done)
   JitenReaderViewModel.kt     one parse at a time per reader           (done)
   JitenReaderHooks.kt         the only surface upstream files call into (done)
 
@@ -72,18 +70,27 @@ hoshi-web/reader/
   reader-jiten-highlight.js   apply/remove word spans                  (done)
   reader-jiten.css            state classes                            (done)
   reader-jiten.js             controller: observe, request, apply      (done)
-  reader-jiten-tap.js         the Jiten token a tap resolves to, for the popup
+  reader-jiten-tap.js         the Jiten token a tap resolves to        (done)
 
 hoshi-web/popup/
-  popup-jiten.js              Jiten view: card and SRS actions
-  popup-jiten.css             Jiten view layout
+  popup-jiten.js              drag, card, SRS actions    (done)
+  popup-jiten.css             card layout and page turn  (done)
 ```
 
-Upstream files touched, all of it delegation: three lines in
+Upstream files touched, all of it delegation. For colouring: three lines in
 `ReaderChapterWebView.kt` (a parameter, install, remove), the asset list in
 `ReaderWebAssets.kt`, script assembly and one restore-script line in
 `ReaderPaginationScripts.kt`, and the view model plus callback in
-`ReaderWebView.kt`.
+`ReaderWebView.kt`. For the card: one call in `selection.js#postTextSelected`,
+one field on `ReaderSelectionData` and its payload, `jitenCard` and
+`jitenAction` messages in `ReaderLookupPopupBridge.kt` with their handlers in
+`ReaderWebView.kt`, and their two entries in `LookupPopupHtml.kt`.
+
+`ReaderLookupPopupBridgeMessage` is a sealed class matched exhaustively by
+`DictionarySearchView.kt` and `ProcessTextLookupActivity.kt` as well, so every
+new message costs a branch in each. Both answer `null`: no chapter, so no
+coloured word — and a request carrying a `messageId` must be answered, or the
+page waits on a promise that never settles.
 
 ## Slices
 
@@ -217,16 +224,83 @@ offline stays uncoloured until read again online. Card states outlive a session,
 so a store keyed by word and reading would colour known words with no network —
 the real offline answer, and bigger than this slice.
 
-**3. Popup mode toggle.** The dictionary popup toggles between its dictionary
-view and a Jiten view. The toggle only changes what is shown; colouring stays
-applied either way. Later: long-press the toggle to drop the colouring too.
+**3. Pull-to-flip card and SRS actions.** A downward drag from the top of the
+dictionary popup flips it to the Jiten card for the tapped word — spelling,
+reading, meanings — and the SRS actions: grade (again/hard/good/easy), never
+forget, blacklist, forget. The same drag flips back. It is a two-page pager
+turned vertically; at rest it costs nothing.
 
-**4. Tap and SRS actions.** A tap collects both the dictionary word and the
-Jiten token under it when the tap lands on a coloured span, so toggling to the
-Jiten view needs no second tap. The Jiten view shows the card and the SRS
-actions: grade (again/hard/good/easy), never forget, blacklist, forget. An
-action updates the word's colour immediately and reconciles if the server
-disagrees.
+Why a gesture rather than a toggle, a tab or a second popup:
+
+- Jiten is wanted in a small fraction of taps, and the card is never acted on
+  unsighted: the meaning is read to confirm the token is the word the reader
+  had in mind rather than a mis-parse. The reveal *is* that check, so anything
+  permanently on screen taxes the taps that never wanted Jiten.
+- The incoming page tracks the finger rather than hiding behind a refresh-style
+  indicator: spelling and reading are legible before the drag commits, so a
+  mis-parse is answered by letting go. Released short of the threshold it
+  springs back, and being a pager it needs no separate way out — the gesture
+  that opened the card closes it.
+- Everything else is spoken for. Horizontal swipe dismisses the popup — on
+  `touchend`, and skipped while a selection exists. Long press selects text, in
+  the chapter as well as the popup; `user-select: none` is scoped to `rt`/`rp`,
+  not to prose. A tap looks the word up. Vertical drag at `scrollTop === 0` is
+  what is left, and `overscroll-behavior: none` is already set, so the browser
+  adds no bounce of its own.
+- `popupReducedMotionScrolling` swallows every `touchmove` and pages the popup
+  instead. Off by default and aimed at e-ink; the pull is not offered there.
+
+Constraints:
+
+- The card is fetched when the popup opens, not when the gesture starts or
+  commits: the block must be readable from the first pixel of the pull, and by
+  then the tap is already hundreds of milliseconds old. It also keeps the
+  surface out of JS — a word with furigana is split across a `ruby` and its
+  okurigana wrapper, so the tap would have to reassemble a partial reading, and
+  a partial reading is worse than none for the mis-parse check the card exists
+  to serve. The tap carries the key, the card carries the word.
+- The key comes off the span; `JitenRepository` throws parse results away, so
+  the card cache behind it is new.
+- A tap that missed a coloured span — text not yet parsed, Jiten just switched
+  on — falls back to posting the tapped sentence. `postTextSelected` already
+  carries `sentence` and `sentenceOffset`, both raw UTF-16 over one string,
+  since the sentence walker rejects furigana. That string is *not* folded the
+  way `reader-jiten-paragraphs.js` folds paragraph text, so folding it needs an
+  offset map to keep `sentenceOffset` meaningful.
+- `srs/set-vocabulary-state` carries `"<deck>-add"` / `"<deck>-remove"`
+  (`neverForget`, `blacklist`) and the literal `"forget-add"`, so
+  `setVocabularyState` cannot go on taking a `JitenCardState`.
+- An action's resulting states are read back with `reader/lookup-vocabulary`
+  rather than predicted. Where a grade lands is decided by rules on the server,
+  so an optimistic colour would be right only by luck, and a word repainted
+  wrongly is worse than one repainted a round trip late.
+- Those states then recolour every instance of the word in the chapter, not
+  only the tapped one: state belongs to the word. The spans carry the key, so
+  the selector is cheap.
+- Forget destroys the card's review history, so it asks twice — a second tap on
+  the button, not `window.confirm`, which needs a chrome client to answer it
+  and is otherwise dropped, leaving the button to do nothing at all.
+- Which way Never Forget and Blacklist toggle is decided in Kotlin from the
+  cached card, not by the page. A card that is not cached is treated as not a
+  member: adding twice is harmless, refusing to act strands the button.
+- Flipping does not resize the popup. The card is short and leaves space below
+  it, but the host owns the frame geometry while the pages move inside the
+  iframe, so resizing means driving both in step through every frame of a drag
+  the user can reverse.
+
+Left standing:
+
+- A word the local dictionary does not know opens no popup at all
+  (`createLookupPopupItem` returns null on an empty result), so the pull has
+  nothing to live on. Relaxing that means a popup whose dictionary half is
+  empty — one condition to revisit once the gesture has proven itself.
+- The reader-side highlight keeps marking the dictionary's span, not Jiten's.
+  The two parsers disagree often, and `selectionRects` counts forward from the
+  tap, so a Jiten token starting to the left of it is not expressible there —
+  moving the highlight on a flip needs rects taken from the marked spans
+  instead. Worth doing eventually; the card names its own word meanwhile, which
+  is the comparison being made anyway.
+- Study decks. `readerStudyDecks` exists in the client and nothing calls it.
 
 ## Risks
 
@@ -236,5 +310,5 @@ disagrees.
 - **Offline-first app, online feature.** Chapters are long; chunk, cancel on
   chapter change, never surface raw exceptions into reader content.
 - **Two dictionaries.** Jiten glosses are thinner than a good local dictionary,
-  which is why the popup keeps the dictionary view one toggle away rather than
-  replacing it.
+  and the two parsers cut words differently. The Jiten card is pulled over the
+  dictionary rather than replacing it, and always names its own word.

@@ -24,6 +24,8 @@ internal data class LookupPopupAssets(
     val selectionEnglishJs: String = "",
     val selectionJs: String = "",
     val readerPopupHostJs: String = "",
+    val popupJitenJs: String = "",
+    val popupJitenCss: String = "",
 ) {
     companion object {
         @Volatile
@@ -42,6 +44,8 @@ internal data class LookupPopupAssets(
             selectionEnglishJs = context.readAsset("hoshi-web/shared/selection-en.js"),
             selectionJs = context.readAsset("hoshi-web/shared/selection.js"),
             readerPopupHostJs = context.readAsset("hoshi-web/popup/reader-popup-host.js"),
+            popupJitenJs = context.readAsset("hoshi-web/popup/popup-jiten.js"),
+            popupJitenCss = context.readAsset("hoshi-web/popup/popup-jiten.css"),
         )
 
         private fun Context.readAsset(path: String): String =
@@ -111,12 +115,19 @@ internal object LookupPopupHtml {
         val selectionConfigureJs = """<script>window.hoshiSelection?.configure?.({ language: $selectionLanguageId });</script>"""
         val popupJs = assets?.let { """<script>${it.popupJs}</script>""" }
             ?: """<script src="$PopupAssetBaseUrl/popup.js"></script>"""
+        val popupJitenCss = assets?.let { """<style>${it.popupJitenCss}</style>""" }
+            ?: """<link rel="stylesheet" href="$PopupAssetBaseUrl/popup-jiten.css">"""
+        // Loaded after popup.js, whose `#entries-container` the Jiten page
+        // slides aside while it is turned to.
+        val popupJitenJs = assets?.let { """<script>${it.popupJitenJs}</script>""" }
+            ?: """<script src="$PopupAssetBaseUrl/popup-jiten.js"></script>"""
         return """
             <!DOCTYPE html>
             <html lang="${contentLanguageProfile.htmlLang}" data-hoshi-color-scheme="$colorScheme" data-hoshi-eink-mode="$eInkMode">
             <head>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
                 $popupCss
+                $popupJitenCss
                 <style>$androidColorSchemeCss</style>
                 $popupTypographyCss
                 $customCss
@@ -175,7 +186,9 @@ internal object LookupPopupHtml {
                             mineEntry: { postMessage: function(content) { return window.HoshiAndroidPopup.requestMessage('mineEntry', content); } },
                             duplicateCheck: { postMessage: function(expression) { return window.HoshiAndroidPopup.requestMessage('duplicateCheck', expression); } },
                             getEntry: { postMessage: function(index) { return window.HoshiAndroidPopup.requestMessage('getEntry', index); } },
-                            lookupRedirect: { postMessage: function(query) { return window.HoshiAndroidPopup.requestMessage('lookupRedirect', query); } }
+                            lookupRedirect: { postMessage: function(query) { return window.HoshiAndroidPopup.requestMessage('lookupRedirect', query); } },
+                            jitenCard: { postMessage: function() { return window.HoshiAndroidPopup.requestMessage('jitenCard', null); } },
+                            jitenAction: { postMessage: function(action) { return window.HoshiAndroidPopup.requestMessage('jitenAction', action); } }
                         }
                     };
                     window.scanNonJapaneseText = ${normalizedSettings.scanNonJapaneseText};
@@ -224,6 +237,7 @@ internal object LookupPopupHtml {
                 $selectionJs
                 $selectionConfigureJs
                 $popupJs
+                $popupJitenJs
             </head>
             <body>
                 <script>${popupGestureScript()}</script>

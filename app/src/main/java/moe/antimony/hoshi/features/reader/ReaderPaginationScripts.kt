@@ -150,6 +150,7 @@ internal object ReaderPaginationScripts {
             paragraphsJs = source.readerJitenParagraphs,
             highlightJs = source.readerJitenHighlight,
             controllerJs = source.readerJiten,
+            tapJs = source.readerJitenTap,
             css = source.readerJitenCss,
         )
         return "<script>\n$body\n$jitenScripts\n</script>"
@@ -171,6 +172,7 @@ private data class ReaderPaginationAssetSource(
     val readerJitenParagraphs: String,
     val readerJitenHighlight: String,
     val readerJiten: String,
+    val readerJitenTap: String,
     val readerJitenCss: String,
 ) {
     companion object {
@@ -191,6 +193,7 @@ private data class ReaderPaginationAssetSource(
                     readerJitenParagraphs = assets.readerJitenParagraphsJs,
                     readerJitenHighlight = assets.readerJitenHighlightJs,
                     readerJiten = assets.readerJitenJs,
+                    readerJitenTap = assets.readerJitenTapJs,
                     readerJitenCss = assets.readerJitenCss,
                 )
             }
@@ -216,6 +219,7 @@ private object SourceTreeReaderPaginationAssets {
             readerJitenParagraphs = readSourceAsset("hoshi-web/reader/reader-jiten-paragraphs.js"),
             readerJitenHighlight = readSourceAsset("hoshi-web/reader/reader-jiten-highlight.js"),
             readerJiten = readSourceAsset("hoshi-web/reader/reader-jiten.js"),
+            readerJitenTap = readSourceAsset("hoshi-web/reader/reader-jiten-tap.js"),
             readerJitenCss = readSourceAsset("hoshi-web/reader/reader-jiten.css"),
         )
     }

@@ -31,6 +31,75 @@ internal fun List<List<JitenToken>>.toReaderTokens(): List<List<JitenReaderToken
     }
 
 /**
+ * What the Jiten page offers to do with a card.
+ *
+ * Named for the button rather than for the request: Never Forget and Blacklist
+ * are memberships that toggle, and which way they toggle depends on the card's
+ * current state. That decision belongs here, next to the state, and not in a
+ * page that would have to be told the answer first.
+ */
+internal enum class JitenReaderAction(val wireName: String) {
+    Again("again"),
+    Hard("hard"),
+    Good("good"),
+    Easy("easy"),
+    NeverForget("neverForget"),
+    Blacklist("blacklist"),
+    Forget("forget"),
+    ;
+
+    val rating: JitenRating?
+        get() = when (this) {
+            Again -> JitenRating.Again
+            Hard -> JitenRating.Hard
+            Good -> JitenRating.Good
+            Easy -> JitenRating.Easy
+            else -> null
+        }
+
+    companion object {
+        fun fromWireName(name: String): JitenReaderAction? = entries.firstOrNull { it.wireName == name }
+    }
+}
+
+/**
+ * One card in the shape `popup-jiten.js` renders.
+ *
+ * Deliberately not [JitenCard]: the popup needs a stable wire contract, and the
+ * card carries fields it has no use for. [states] are the same CSS suffixes the
+ * coloured spans carry, so the popup and the chapter agree on what a word is.
+ */
+@Serializable
+internal data class JitenPopupCard(
+    val wordId: Int,
+    val readingIndex: Int,
+    val spelling: String,
+    val reading: String,
+    val frequencyRank: Int,
+    val states: List<String>,
+    val meanings: List<JitenPopupMeaning>,
+)
+
+@Serializable
+internal data class JitenPopupMeaning(
+    val glosses: List<String>,
+    val partsOfSpeech: List<String>,
+)
+
+internal fun JitenCard.toPopupCard(): JitenPopupCard =
+    JitenPopupCard(
+        wordId = key.wordId,
+        readingIndex = key.readingIndex,
+        spelling = spelling,
+        reading = reading,
+        frequencyRank = frequencyRank,
+        states = states.map(JitenCardState::cssClass),
+        meanings = meanings.map { meaning ->
+            JitenPopupMeaning(glosses = meaning.glosses, partsOfSpeech = meaning.partsOfSpeech)
+        },
+    )
+
+/**
  * Paragraphs worth a parse request. A chapter is mostly prose but also holds
  * page numbers, Latin front matter and stray punctuation; posting those spends
  * the parse budget on text that can produce no card.

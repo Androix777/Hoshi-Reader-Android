@@ -70,6 +70,30 @@ internal class JitenReaderViewModel @Inject constructor(
         jobs.remove(requestId)?.cancel()
     }
 
+    /**
+     * The card behind a tapped word, as JSON for the popup, or null if parsing
+     * never met it. Serialized here rather than in the reader so the popup's
+     * wire shape stays inside the feature.
+     */
+    fun cardJson(key: JitenWordKey): String? =
+        repository.card(key)?.let { card -> json.encodeToString(card.toPopupCard()) }
+
+    /**
+     * Carries out a card action, answering with the resulting state names or
+     * null if it could not be done. A failure has to reach the page: it is what
+     * puts the buttons back, and a silent one would leave them waiting.
+     */
+    fun act(key: JitenWordKey, action: JitenReaderAction, onDone: (List<String>?) -> Unit) {
+        viewModelScope.launch {
+            val states = try {
+                repository.applyAction(key, action).map(JitenCardState::cssClass)
+            } catch (error: JitenApiException) {
+                null
+            }
+            onDone(states)
+        }
+    }
+
     override fun onCleared() {
         cancelAll()
         super.onCleared()

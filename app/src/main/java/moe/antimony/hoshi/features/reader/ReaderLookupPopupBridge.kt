@@ -252,6 +252,26 @@ internal sealed class ReaderLookupPopupBridgeMessage {
         val index: Int,
     ) : ReaderLookupPopupBridgeMessage()
 
+    /**
+     * The Jiten card for the word this popup was opened on. Carries no key: the
+     * tap already recorded one in the popup's selection, and letting the page
+     * name a word would let it act on one the reader never touched.
+     */
+    data class JitenCard(
+        override val popupId: String,
+        override val messageId: String?,
+    ) : ReaderLookupPopupBridgeMessage()
+
+    /**
+     * A card action named by its button. Like [JitenCard] it carries no word:
+     * the one the tap recorded is the only one this popup may act on.
+     */
+    data class JitenAction(
+        override val popupId: String,
+        override val messageId: String?,
+        val action: String,
+    ) : ReaderLookupPopupBridgeMessage()
+
     data class ContentReady(
         override val popupId: String,
         override val messageId: String?,
@@ -341,6 +361,15 @@ internal sealed class ReaderLookupPopupBridgeMessage {
                     popupId = popupId,
                     messageId = messageId ?: return null,
                     index = payload.int("body")?.takeIf { it >= 0 } ?: return null,
+                )
+                "jitenCard" -> JitenCard(
+                    popupId = popupId,
+                    messageId = messageId ?: return null,
+                )
+                "jitenAction" -> JitenAction(
+                    popupId = popupId,
+                    messageId = messageId ?: return null,
+                    action = payload.string("body") ?: return null,
                 )
                 "contentReady" -> ContentReady(popupId, messageId)
                 "popupScrolled" -> PopupScrolled(popupId, messageId)
@@ -518,9 +547,11 @@ internal fun lookupPopupAssetResponse(name: String, assets: LookupPopupAssets): 
         "selection.js" -> assets.selectionJs
         "popup.js" -> assets.popupJs
         "reader-popup-host.js" -> assets.readerPopupHostJs
+        "popup-jiten.js" -> assets.popupJitenJs
+        "popup-jiten.css" -> assets.popupJitenCss
         else -> return null
     }
-    val mimeType = if (name == "popup.css") "text/css" else "application/javascript"
+    val mimeType = if (name.endsWith(".css")) "text/css" else "application/javascript"
     return LookupPopupAssetResponse(mimeType, content)
 }
 

@@ -159,14 +159,14 @@ class JitenApiClient @Inject constructor(
         )
     }
 
-    suspend fun setVocabularyState(key: JitenWordKey, state: JitenCardState) {
+    suspend fun setVocabularyState(key: JitenWordKey, action: JitenDeckAction) {
         request(
             action = "srs/set-vocabulary-state",
             body = json.encodeToString(
                 JitenWire.SetVocabularyStateRequest(
                     wordId = key.wordId,
                     readingIndex = key.readingIndex,
-                    state = state.cssClass,
+                    state = action.wireValue,
                 ),
             ),
         )

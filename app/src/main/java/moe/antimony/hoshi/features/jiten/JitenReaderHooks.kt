@@ -98,6 +98,18 @@ internal fun jitenReaderTokensInvocation(requestId: String, tokensJson: String):
 internal fun jitenReaderStartInvocation(): String =
     "if (window.hoshiReaderJiten) { window.hoshiReaderJiten.start(); }"
 
+/** Repaints a reviewed word wherever the chapter shows it. */
+internal fun WebView.updateJitenReaderStates(key: JitenWordKey, states: List<String>) {
+    evaluateJavascript(jitenReaderStatesInvocation(key, states), null)
+}
+
+/** The state names as the popup receives them. */
+internal fun jitenStatesJson(states: List<String>): String = Json.encodeToString(states)
+
+internal fun jitenReaderStatesInvocation(key: JitenWordKey, states: List<String>): String =
+    "if (window.hoshiReaderJitenHighlight) { window.hoshiReaderJitenHighlight.updateStates(" +
+        "${key.wordId}, ${key.readingIndex}, ${Json.encodeToString(states)}); }"
+
 /**
  * The reader scripts, ready to append to the shell script. They are injected
  * whether or not Jiten is switched on: the controller does nothing until the
@@ -108,9 +120,13 @@ internal fun jitenReaderScripts(
     paragraphsJs: String,
     highlightJs: String,
     controllerJs: String,
+    tapJs: String,
     css: String,
 ): String = listOf(
     paragraphsJs,
     highlightJs.replace("__HOSHI_JITEN_CSS_LITERAL__", Json.encodeToString(css)),
     controllerJs,
+    // After the highlight module, whose attributes it reads. Order is only
+    // legibility: nothing here runs until a tap.
+    tapJs,
 ).joinToString(separator = "\n")
