@@ -2,6 +2,8 @@ package moe.antimony.hoshi.features.reader
 
 import java.io.File
 import kotlinx.serialization.Serializable
+import moe.antimony.hoshi.features.jiten.jitenReaderScripts
+import moe.antimony.hoshi.features.jiten.jitenReaderStartInvocation
 import moe.antimony.hoshi.features.sasayaki.SasayakiCueRange
 
 @Serializable
@@ -144,7 +146,13 @@ internal object ReaderPaginationScripts {
             .replace("__HOSHI_TRAILING_SPACER_WIDTH_LITERAL__", settings.trailingSpacerWidthCss.javaScriptSingleQuotedStringLiteral())
             .replace("__HOSHI_BLUR_IMAGES__", settings.blurImages.toString())
             .replace("__HOSHI_RESTORE_SCRIPTS__", restoreScripts)
-        return "<script>\n$body\n</script>"
+        val jitenScripts = jitenReaderScripts(
+            paragraphsJs = source.readerJitenParagraphs,
+            highlightJs = source.readerJitenHighlight,
+            controllerJs = source.readerJiten,
+            css = source.readerJitenCss,
+        )
+        return "<script>\n$body\n$jitenScripts\n</script>"
     }
 }
 
@@ -160,6 +168,10 @@ private data class ReaderPaginationAssetSource(
     val readerVnRangeMap: String,
     val readerVnSelectionProjection: String,
     val highlights: String,
+    val readerJitenParagraphs: String,
+    val readerJitenHighlight: String,
+    val readerJiten: String,
+    val readerJitenCss: String,
 ) {
     companion object {
         fun load(assets: ReaderWebAssets?): ReaderPaginationAssetSource {
@@ -176,6 +188,10 @@ private data class ReaderPaginationAssetSource(
                     readerVnRangeMap = assets.readerVnRangeMapJs,
                     readerVnSelectionProjection = assets.readerVnSelectionProjectionJs,
                     highlights = assets.highlightsJs,
+                    readerJitenParagraphs = assets.readerJitenParagraphsJs,
+                    readerJitenHighlight = assets.readerJitenHighlightJs,
+                    readerJiten = assets.readerJitenJs,
+                    readerJitenCss = assets.readerJitenCss,
                 )
             }
             return SourceTreeReaderPaginationAssets.value
@@ -197,6 +213,10 @@ private object SourceTreeReaderPaginationAssets {
             readerVnRangeMap = readSourceAsset("hoshi-web/reader/reader-vn-range-map.js"),
             readerVnSelectionProjection = readSourceAsset("hoshi-web/reader/reader-vn-selection-projection.js"),
             highlights = readSourceAsset("hoshi-web/reader/highlights.js"),
+            readerJitenParagraphs = readSourceAsset("hoshi-web/reader/reader-jiten-paragraphs.js"),
+            readerJitenHighlight = readSourceAsset("hoshi-web/reader/reader-jiten-highlight.js"),
+            readerJiten = readSourceAsset("hoshi-web/reader/reader-jiten.js"),
+            readerJitenCss = readSourceAsset("hoshi-web/reader/reader-jiten.css"),
         )
     }
 
@@ -216,6 +236,7 @@ private fun readerRestoreScripts(
 ): String = listOfNotNull(
     highlightsJson?.let { "window.hoshiHighlights.applyHighlights($it);" },
     initialRestoreScript,
+    jitenReaderStartInvocation(),
 ).joinToString(separator = "\n")
 
 private fun String.javaScriptStringLiteral(): String =

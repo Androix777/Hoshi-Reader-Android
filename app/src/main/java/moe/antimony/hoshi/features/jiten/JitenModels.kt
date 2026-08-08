@@ -131,7 +131,9 @@ internal object JitenWire {
         val frequencyRank: Int = 0,
         @Serializable(with = FlexibleStringListSerializer::class)
         val partsOfSpeech: List<String> = emptyList(),
+        @Serializable(with = FlexibleStringListsSerializer::class)
         val meaningsChunks: List<List<String>> = emptyList(),
+        @Serializable(with = FlexibleStringListsSerializer::class)
         val meaningsPartOfSpeech: List<List<String>> = emptyList(),
         val knownState: List<Int> = emptyList(),
         val pitchAccents: List<Int>? = null,
@@ -175,16 +177,31 @@ internal object JitenWire {
 }
 
 /**
- * `partsOfSpeech` arrives either as an array or as a bare string; the browser
+ * A string list arrives either as an array or as a bare string; the browser
  * extension normalizes the same way rather than failing the whole parse.
  */
+private fun stringListElement(element: JsonElement): JsonElement = when (element) {
+    is JsonArray -> element
+    JsonNull -> buildJsonArray { }
+    else -> buildJsonArray { add(element) }
+}
+
 internal object FlexibleStringListSerializer : JsonTransformingSerializer<List<String>>(
     ListSerializer(String.serializer()),
 ) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = stringListElement(element)
+}
+
+/**
+ * The per-meaning lists take the same liberty one level down, and mix the two
+ * shapes inside a single response: `"meaningsPartOfSpeech": ["n", ["v1", "vt"]]`.
+ */
+internal object FlexibleStringListsSerializer : JsonTransformingSerializer<List<List<String>>>(
+    ListSerializer(ListSerializer(String.serializer())),
+) {
     override fun transformDeserialize(element: JsonElement): JsonElement = when (element) {
-        is JsonArray -> element
-        JsonNull -> buildJsonArray { }
-        else -> buildJsonArray { add(element) }
+        is JsonArray -> buildJsonArray { element.forEach { add(stringListElement(it)) } }
+        else -> buildJsonArray { }
     }
 }
 

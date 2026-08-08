@@ -52,6 +52,8 @@ import moe.antimony.hoshi.content.ContentLanguageProfile
 import moe.antimony.hoshi.epub.EpubBook
 import moe.antimony.hoshi.epub.HighlightColor
 import moe.antimony.hoshi.features.dictionary.DictionarySettings
+import moe.antimony.hoshi.features.jiten.installJitenReaderBridge
+import moe.antimony.hoshi.features.jiten.removeJitenReaderBridge
 import moe.antimony.hoshi.features.sasayaki.SasayakiSettings
 import moe.antimony.hoshi.webview.applyHoshiWebViewSecurityDefaults
 
@@ -94,6 +96,7 @@ internal fun ChapterWebView(
     readerPopupFrames: List<ReaderLookupPopupFramePayload>,
     fontManager: ReaderFontManager,
     systemDark: Boolean,
+    onJitenParseRequested: (WebView, Int, String) -> Unit = { _, _, _ -> },
     onBeforeRestoreVisible: (WebView) -> ReaderRestoreBeforeVisibleAction? = { null },
     modifier: Modifier = Modifier,
 ) {
@@ -116,6 +119,7 @@ internal fun ChapterWebView(
     val currentOnRestoreStarted = rememberUpdatedState(onRestoreStarted)
     val currentOnRestoreCompleted = rememberUpdatedState(onRestoreCompleted)
     val currentOnBeforeRestoreVisible = rememberUpdatedState(onBeforeRestoreVisible)
+    val currentOnJitenParseRequested = rememberUpdatedState(onJitenParseRequested)
     val context = LocalContext.current
     val readerWebAssets = remember(context) { ReaderWebAssets.load(context) }
     val viewportDensity = context.resources.displayMetrics.density.coerceAtLeast(1f)
@@ -254,6 +258,9 @@ internal fun ChapterWebView(
                     },
                     "HoshiReaderImage",
                 )
+                installJitenReaderBridge { jitenWebView, requestId, paragraphsJson ->
+                    currentOnJitenParseRequested.value(jitenWebView, requestId, paragraphsJson)
+                }
                 ReaderLookupPopupWebBridge.install(this, readerPopupBridgeHolder)
                 webViewClient = EpubWebViewClient(
                     book = book,
@@ -1359,6 +1366,7 @@ private fun releaseReaderWebView(webView: HoshiReaderWebView) {
     webView.removeJavascriptInterface("HoshiTextSelection")
     webView.removeJavascriptInterface("HoshiReaderRestore")
     webView.removeJavascriptInterface("HoshiReaderImage")
+    webView.removeJitenReaderBridge()
     webView.stopLoading()
     webView.destroy()
 }

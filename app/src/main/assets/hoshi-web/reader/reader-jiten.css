@@ -1,0 +1,40 @@
+/*
+ * Card-state colours, restricted to `color` and `background-color`: anything
+ * that adds a box (border, padding) or a decoration line risks shifting the
+ * column pagination the reader stores progress against.
+ *
+ * `!important` is deliberate and narrow. The reader forces
+ * `color: var(--hoshi-text-color) !important` on `html, body`, and EPUB
+ * stylesheets set their own colours at arbitrary specificity; a state colour
+ * that loses to either is worse than no colouring at all. States with no rule
+ * (mature, mastered) stay on the reader's own colour, so the override only
+ * ever applies where a state was deliberately given a colour.
+ *
+ * Rule order is the priority order: the last matching rule wins for a card
+ * that carries several states at once.
+ */
+
+.jiten-word {
+    cursor: pointer;
+}
+
+.jiten-word.jiten-young {
+    color: #4ac34a !important;
+}
+
+.jiten-word.jiten-new {
+    color: #4b8dff !important;
+}
+
+.jiten-word.jiten-due {
+    color: #e8a735 !important;
+}
+
+.jiten-word.jiten-suspended,
+.jiten-word.jiten-blacklisted {
+    color: #777777 !important;
+}
+
+.jiten-word.jiten-redundant {
+    background-color: rgba(75, 141, 255, 0.16);
+}

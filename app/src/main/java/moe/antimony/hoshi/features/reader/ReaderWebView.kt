@@ -63,6 +63,8 @@ import moe.antimony.hoshi.features.audio.AudioSettings
 import moe.antimony.hoshi.features.audio.LocalAudioRepository
 import moe.antimony.hoshi.features.audio.WordAudioPlayer
 import moe.antimony.hoshi.features.anki.AnkiViewModel
+import moe.antimony.hoshi.features.jiten.JitenReaderViewModel
+import moe.antimony.hoshi.features.jiten.applyJitenReaderTokens
 import moe.antimony.hoshi.features.dictionary.DictionaryImageRequestHandler
 import moe.antimony.hoshi.features.dictionary.DictionarySettings
 import moe.antimony.hoshi.features.dictionary.LookupPopupAssets
@@ -221,6 +223,7 @@ fun ReaderWebView(
     var rootSelectionHighlight by remember { mutableStateOf<ReaderRootSelectionHighlight?>(null) }
     var fullscreenImage by remember { mutableStateOf<ReaderFullscreenImage?>(null) }
     val ankiViewModel: AnkiViewModel = hiltViewModel()
+    val jitenReaderViewModel: JitenReaderViewModel = hiltViewModel()
     val ankiUiState by ankiViewModel.uiState.collectAsStateWithLifecycle()
     val popupAssets = remember(context) { LookupPopupAssets.load(context) }
     val readerPopupBridgeHolder = remember { ReaderLookupPopupBridgeCallbackHolder() }
@@ -1697,6 +1700,11 @@ fun ReaderWebView(
                             }
                         },
                         onWebViewReady = { webView = it },
+                        onJitenParseRequested = { jitenWebView, requestId, paragraphsJson ->
+                            jitenReaderViewModel.parseChapter(paragraphsJson) { tokensJson ->
+                                jitenWebView.applyJitenReaderTokens(requestId, tokensJson)
+                            }
+                        },
                         isWebViewRestoring = stateHolder.isWebViewRestoring,
                         webViewRestoreEpoch = stateHolder.webViewRestoreEpoch,
                         onRestoreStarted = stateHolder::markWebViewRestoring,

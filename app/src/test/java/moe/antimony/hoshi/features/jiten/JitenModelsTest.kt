@@ -118,6 +118,27 @@ class JitenModelsTest {
     }
 
     @Test
+    fun perMeaningListsAcceptBareStringsMixedWithArrays() {
+        // What `reader/parse` really answers: a one-entry list is sent unwrapped,
+        // and both shapes turn up in the same response.
+        val card = json.decodeFromString<JitenWire.Vocabulary>(
+            """
+            {
+              "wordId": 1,
+              "readingIndex": 0,
+              "meaningsChunks": ["value", ["worth", "price"]],
+              "meaningsPartOfSpeech": ["n", ["n", "vs"]]
+            }
+            """.trimIndent(),
+        ).toCard()
+
+        assertEquals(listOf("value"), card.meanings[0].glosses)
+        assertEquals(listOf("n"), card.meanings[0].partsOfSpeech)
+        assertEquals(listOf("worth", "price"), card.meanings[1].glosses)
+        assertEquals(listOf("n", "vs"), card.meanings[1].partsOfSpeech)
+    }
+
+    @Test
     fun cardStatesHaveDistinctWireValuesAndClassNames() {
         assertEquals(
             JitenCardState.entries.size,
